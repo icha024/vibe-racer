@@ -44,39 +44,36 @@
                 let carGraphics = this.make.graphics({x: 0, y: 0, add: false});
                 carGraphics.clear();
 
-                // Main chassis (simple tapered rectangle)
+                // Main body (simplified arrow shape)
                 carGraphics.fillStyle(0xFF1801);
-                carGraphics.fillRoundedRect(10, 15, 50, 20, 5); // Central body
-                
-                // Pointed nose
-                carGraphics.beginPath();
-                carGraphics.moveTo(60, 20);
-                carGraphics.lineTo(70, 25);
-                carGraphics.lineTo(60, 30);
-                carGraphics.closePath();
-                carGraphics.fillPath();
+                carGraphics.fillRect(20, 20, 40, 10); // Central chassis
+                carGraphics.fillTriangle(60, 15, 70, 25, 60, 35); // Pointed nose
 
-                // Front wing (simplified)
+                // Front wing (single element)
                 carGraphics.fillStyle(0x333333);
-                carGraphics.fillRect(65, 10, 15, 30); // Wide front wing assembly
-                
-                // Rear wing (distinctive T-shape)
-                carGraphics.fillRect(0, 5, 15, 40); // Vertical supports
-                carGraphics.fillRect(0, 5, 40, 10); // Horizontal wing element
-                carGraphics.fillRect(0, 35, 40, 10);
+                carGraphics.fillRect(65, 10, 5, 30); // Vertical endplate
+                carGraphics.fillRect(55, 20, 15, 5); // Horizontal wing element
 
-                // Wheels (clear circular representation)
+                // Rear wing (simplified T-shape)
+                carGraphics.fillRect(10, 5, 5, 40); // Left support
+                carGraphics.fillRect(35, 5, 5, 40); // Right support
+                carGraphics.fillRect(10, 20, 30, 5); // Main wing element
+
+                // Wheels (angular representation)
                 carGraphics.fillStyle(0x111111);
-                // Front wheels
-                carGraphics.fillCircle(55, 20, 6);
-                carGraphics.fillCircle(55, 30, 6);
+                // Front wheels (rectangular tires)
+                carGraphics.fillRect(50, 15, 12, 5); // Right front
+                carGraphics.fillRect(50, 30, 12, 5); // Left front
                 // Rear wheels
-                carGraphics.fillCircle(25, 20, 8);
-                carGraphics.fillCircle(25, 30, 8);
+                carGraphics.fillRect(25, 15, 15, 5); // Right rear
+                carGraphics.fillRect(25, 30, 15, 5); // Left rear
 
-                // Generate texture with proper dimensions
-                carGraphics.generateTexture('car_texture', 100, 50); // Increased size for clarity
+                // Add outline for better definition
+                carGraphics.lineStyle(2, 0x000000);
+                carGraphics.strokeRect(20, 20, 40, 10);
+                carGraphics.strokeTriangle(60, 15, 70, 25, 60, 35);
 
+                carGraphics.generateTexture('car_texture', 80, 50);
                 this.textures.generate('white_pixel', { data: ['#'], pixelWidth: 2, pixelHeight: 2 });
             }
 
