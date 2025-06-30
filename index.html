@@ -78,8 +78,8 @@
                 carGraphics.fillRect(60, 5, 10, 5); // Front-left wheel
                 carGraphics.fillRect(60, 40, 10, 5); // Front-right wheel
                 // Rear Wheels (wider)
-                carGraphics.fillRect(15, 0, 15, 5); // Rear-left wheel
-                carGraphics.fillRect(15, 45, 15, 5); // Rear-right wheel
+                carGraphics.fillRect(22.5, 2.5, 15, 5); // Rear-left wheel
+                carGraphics.fillRect(22.5, 42.5, 15, 5); // Rear-right wheel
 
                 // Add outline for better definition - draw after fill to ensure visibility
                 carGraphics.lineStyle(2, 0x000000); // Black outline for clarity
@@ -112,8 +112,8 @@
                 // Outline for Wheels
                 carGraphics.strokeRect(60, 5, 10, 5);
                 carGraphics.strokeRect(60, 40, 10, 5);
-                carGraphics.strokeRect(15, 0, 15, 5);
-                carGraphics.strokeRect(15, 45, 15, 5);
+                carGraphics.strokeRect(22.5, 2.5, 15, 5);
+                carGraphics.strokeRect(22.5, 42.5, 15, 5);
 
                 // Generate texture. Adjust dimensions to encompass all parts
                 carGraphics.generateTexture('car_texture', 90, 50);
