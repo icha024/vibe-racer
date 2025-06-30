@@ -45,43 +45,54 @@
 
                 // --- Draw elements from back to front (bottom layer to top layer) ---
 
-                // Rear Wheels (black squares) - Drawn first to be underneath
+                // Rear Wheels (black squares)
                 carGraphics.fillStyle(0x111111);
-                carGraphics.fillRect(10, 0, 8, 5);   // Rear right
-                carGraphics.fillRect(10, 25, 8, 5);  // Rear left
+                carGraphics.fillRect(5, 0, 8, 5);   // Rear right
+                carGraphics.fillRect(5, 25, 8, 5);  // Rear left
 
-                // Front Wheels (black squares) - Drawn next
-                carGraphics.fillRect(30, 0, 8, 5);  // Front right
-                carGraphics.fillRect(30, 25, 8, 5); // Front left
+                // Rear Axle (black rectangle)
+                carGraphics.fillRect(8, 2, 2, 26); // Connecting rear wheels
 
-                // Front Axle (black rectangle) - Drawn to connect front wheels, underneath body
-                carGraphics.fillRect(33, 0, 2, 30); // x, y, width, height (connects from y=0 to y=30)
+                // Front Wheels (black squares)
+                carGraphics.fillRect(45, 0, 8, 5);  // Front right
+                carGraphics.fillRect(45, 25, 8, 5); // Front left
 
-                // Rear Spoiler (black rectangle) - Drawn behind the main body
-                carGraphics.fillRect(0, 10, 15, 10); // x, y, width, height (Wider and positioned to connect)
+                // Front Axle (black rectangle)
+                carGraphics.fillRect(48, 2, 2, 26); // Connecting front wheels
 
-                // Spoiler Links (black lines) - Drawn to connect spoiler to body
-                carGraphics.fillRect(13, 10, 4, 1); // Top link (bridges spoiler to body)
-                carGraphics.fillRect(13, 19, 4, 1); // Bottom link (bridges spoiler to body)
+                // Rear Spoiler Supports (black rectangles)
+                carGraphics.fillRect(0, 8, 2, 4);   // Left support
+                carGraphics.fillRect(0, 18, 2, 4);  // Right support
 
-                // Main Body (red square) - Drawn over wheels and axles
+                // Rear Spoiler (black rectangle)
+                carGraphics.fillRect(0, 10, 5, 10); // Wider spoiler
+
+                // Main Body (red rectangle)
                 carGraphics.fillStyle(0xff0000);
-                carGraphics.fillRect(15, 5, 20, 20); // x, y, width, height
+                carGraphics.fillRect(15, 5, 30, 20); // Long, narrow body
 
-                // Nose (red triangle) - Drawn over the front of the body
+                // Sidepods (red rectangles)
+                carGraphics.fillRect(20, 0, 10, 5); // Left sidepod
+                carGraphics.fillRect(20, 25, 10, 5); // Right sidepod
+
+                // Nose (red triangle)
                 carGraphics.beginPath();
-                carGraphics.moveTo(35, 5);  // Base of triangle, top-right of square
-                carGraphics.lineTo(45, 15); // Pointy tip
-                carGraphics.lineTo(35, 25); // Base of triangle, bottom-right of square
+                carGraphics.moveTo(45, 5);  // Base top
+                carGraphics.lineTo(55, 15); // Pointy tip
+                carGraphics.lineTo(45, 25); // Base bottom
                 carGraphics.closePath();
                 carGraphics.fillPath();
 
-                // Cockpit (black circle) - Drawn on top of the body
+                // Front Wing (black rectangle)
                 carGraphics.fillStyle(0x111111);
-                carGraphics.fillCircle(25, 15, 4); // Centered on the square body
+                carGraphics.fillRect(50, 0, 10, 30); // Wide front wing
+
+                // Cockpit (black circle)
+                carGraphics.fillStyle(0x111111);
+                carGraphics.fillCircle(30, 15, 4); // Centered on main body
                 
                 // Set texture size to encompass all parts
-                carGraphics.generateTexture('car_texture', 50, 30); // Adjusted size
+                carGraphics.generateTexture('car_texture', 60, 30); // Adjusted size for new design
 
                 this.textures.generate('white_pixel', { data: ['#'], pixelWidth: 2, pixelHeight: 2 });
             }
