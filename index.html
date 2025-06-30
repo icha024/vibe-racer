@@ -51,9 +51,9 @@
 
         function preload() {
             this.load.image('car', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAjCAYAAABvR7Y6AAAABmJLR0QA/wD/AP+AdzggAAAAtUlEQVRIx2P4DwQYGPg/oP/v37/vP7/7N0yAhkGGYVhw4CAzMP0DA+MPGhpGA0jA8AwMDB9m/3///j9wMQYGBq4MDAz/h4H7+Q8QJgx4/w8DAwMDD+fPfx+wMTAwMPIwMDD8P31gwPDv/wMMDAxg/Pz+gZGBAR/2vP+BgeG/s/T/oJGhgaGDkYGB4R8GBgb2f2BiYGBgYMDAwMBiQzUoGwY4DAwMWBgYAAB111V0xW5+76gAAAABJRU5ErkJggg==');
-            this.load.image('road', '__WHITE');
-            this.load.image('grass', '__BLACK');
-            this.load.image('checkered', '__WHITE');
+            this.load.image('road', '#444444');
+            this.load.image('grass', '#228B22');
+            this.load.image('checkered', '#ffffff');
         }
 
         function create() {
@@ -80,7 +80,7 @@
             cursors = this.input.keyboard.createCursorKeys();
             
             // Enable physics debugging
-            this.matter.world.drawDebug = true;
+            this.matter.world.drawDebug = false;
             
             // Camera follow
             this.cameras.main.startFollow(car);
