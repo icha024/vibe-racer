@@ -44,47 +44,38 @@
                 let carGraphics = this.make.graphics({x: 0, y: 0, add: false});
                 carGraphics.clear();
 
-                // Main chassis (triangular nose to rectangular body)
+                // Main chassis (simple tapered rectangle)
                 carGraphics.fillStyle(0xFF1801);
+                carGraphics.fillRoundedRect(10, 15, 50, 20, 5); // Central body
+                
+                // Pointed nose
                 carGraphics.beginPath();
-                carGraphics.moveTo(15, 15);  // Nose tip
-                carGraphics.lineTo(55, 5);   // Front wing connection
-                carGraphics.lineTo(55, 25);  // Front bulkhead
-                carGraphics.lineTo(15, 35);  // Tapered tail
+                carGraphics.moveTo(60, 20);
+                carGraphics.lineTo(70, 25);
+                carGraphics.lineTo(60, 30);
                 carGraphics.closePath();
                 carGraphics.fillPath();
 
-                // Front wing (triangular arrangement)
+                // Front wing (simplified)
                 carGraphics.fillStyle(0x333333);
-                carGraphics.fillTriangle(5, 10, 65, 5, 65, 25);  // Main plane
-                carGraphics.fillRect(50, 0, 30, 5);  // Wing elements
-                carGraphics.fillRect(50, 25, 30, 5);
+                carGraphics.fillRect(65, 10, 15, 30); // Wide front wing assembly
+                
+                // Rear wing (distinctive T-shape)
+                carGraphics.fillRect(0, 5, 15, 40); // Vertical supports
+                carGraphics.fillRect(0, 5, 40, 10); // Horizontal wing element
+                carGraphics.fillRect(0, 35, 40, 10);
 
-                // Sidepods
-                carGraphics.fillRect(30, 12, 25, 8);
-                carGraphics.fillRect(30, 20, 25, 8);
-
-                // Airbox/Cockpit
-                carGraphics.fillStyle(0x222222);
-                carGraphics.fillRect(40, 15, 10, 10);
-
-                // Rear wing (high-mounted)
-                carGraphics.fillStyle(0x555555);
-                carGraphics.fillRect(5, 0, 10, 35);  // Endplates
-                carGraphics.fillRect(5, 0, 40, 5);   // Wing element
-                carGraphics.fillRect(5, 30, 40, 5);
-
-                // Wheels (proper F1 size ratio)
+                // Wheels (clear circular representation)
                 carGraphics.fillStyle(0x111111);
-                // Front wheels (smaller)
-                carGraphics.fillCircle(50, 10, 6);
-                carGraphics.fillCircle(50, 30, 6);
-                // Rear wheels (larger)
-                carGraphics.fillCircle(20, 10, 8);
-                carGraphics.fillCircle(20, 30, 8);
+                // Front wheels
+                carGraphics.fillCircle(55, 20, 6);
+                carGraphics.fillCircle(55, 30, 6);
+                // Rear wheels
+                carGraphics.fillCircle(25, 20, 8);
+                carGraphics.fillCircle(25, 30, 8);
 
                 // Generate texture with proper dimensions
-                carGraphics.generateTexture('car_texture', 70, 40);
+                carGraphics.generateTexture('car_texture', 100, 50); // Increased size for clarity
 
                 this.textures.generate('white_pixel', { data: ['#'], pixelWidth: 2, pixelHeight: 2 });
             }
