@@ -103,7 +103,10 @@
 
             context.beginPath();
             // Start at the first point after a small offset to allow arcTo to draw to it
-            context.moveTo(points[0].x + (points[1].x - points[0].x > 0 ? radius : -radius), points[0].y); 
+            context.moveTo(
+                points[0].x,
+                points[0].y + (points[1].y - points[0].y > 0 ? radius : -radius)
+            ); 
 
             for (let i = 0; i < points.length; i++) {
                 const p1 = points[i];
@@ -285,9 +288,15 @@
             // 3. Draw Car
             ctx.save();
             ctx.translate(car.x, car.y);
-            ctx.rotate(car.angle + Math.PI / 2); // Adjust rotation for sprite orientation
+            ctx.rotate(car.angle); // Adjust rotation for sprite orientation
             ctx.drawImage(carSpriteImage, -CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
             ctx.restore();
+
+            // Draw car position debug marker
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            ctx.arc(car.x, car.y, 5, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         // Attach the initialization function to the window's load event
