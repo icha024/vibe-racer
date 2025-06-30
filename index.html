@@ -45,54 +45,32 @@
 
                 // --- Draw elements from back to front (bottom layer to top layer) ---
 
-                // Rear Wheels (black squares)
-                carGraphics.fillStyle(0x111111);
-                carGraphics.fillRect(5, 0, 8, 5);   // Rear right
-                carGraphics.fillRect(5, 25, 8, 5);  // Rear left
-
-                // Rear Axle (black rectangle)
-                carGraphics.fillRect(8, 2, 2, 26); // Connecting rear wheels
-
-                // Front Wheels (black squares)
-                carGraphics.fillRect(45, 0, 8, 5);  // Front right
-                carGraphics.fillRect(45, 25, 8, 5); // Front left
-
-                // Front Axle (black rectangle)
-                carGraphics.fillRect(48, 2, 2, 26); // Connecting front wheels
-
-                // Rear Spoiler Supports (black rectangles)
-                carGraphics.fillRect(0, 8, 2, 4);   // Left support
-                carGraphics.fillRect(0, 18, 2, 4);  // Right support
-
-                // Rear Spoiler (black rectangle)
-                carGraphics.fillRect(0, 10, 5, 10); // Wider spoiler
-
-                // Main Body (red rectangle)
-                carGraphics.fillStyle(0xff0000);
-                carGraphics.fillRect(15, 5, 30, 20); // Long, narrow body
-
-                // Sidepods (red rectangles)
-                carGraphics.fillRect(20, 0, 10, 5); // Left sidepod
-                carGraphics.fillRect(20, 25, 10, 5); // Right sidepod
-
-                // Nose (red triangle)
-                carGraphics.beginPath();
-                carGraphics.moveTo(45, 5);  // Base top
-                carGraphics.lineTo(55, 15); // Pointy tip
-                carGraphics.lineTo(45, 25); // Base bottom
-                carGraphics.closePath();
-                carGraphics.fillPath();
-
-                // Front Wing (black rectangle)
-                carGraphics.fillStyle(0x111111);
-                carGraphics.fillRect(50, 0, 10, 30); // Wide front wing
-
-                // Cockpit (black circle)
-                carGraphics.fillStyle(0x111111);
-                carGraphics.fillCircle(30, 15, 4); // Centered on main body
+                // Draw chassis (main body)
+                carGraphics.fillStyle(0xFF1801); // Ferrari red
+                carGraphics.fillRect(10, 10, 40, 10); // Main body (long narrow rectangle)
                 
-                // Set texture size to encompass all parts
-                carGraphics.generateTexture('car_texture', 60, 30); // Adjusted size for new design
+                // Front wing
+                carGraphics.fillStyle(0x333333);
+                carGraphics.fillRect(45, 5, 20, 20); // Wide front wing assembly
+                
+                // Rear wing
+                carGraphics.fillRect(0, 5, 15, 20); // Elevated rear wing
+                
+                // Tires (4 wheels)
+                carGraphics.fillStyle(0x111111);
+                // Front wheels
+                carGraphics.fillCircle(45, 10, 5);  // Front right
+                carGraphics.fillCircle(45, 20, 5); // Front left
+                // Rear wheels
+                carGraphics.fillCircle(15, 10, 5);  // Rear right
+                carGraphics.fillCircle(15, 20, 5); // Rear left
+                
+                // Cockpit
+                carGraphics.fillStyle(0x222222);
+                carGraphics.fillRect(25, 12, 8, 6); // Central cockpit
+                
+                // Generate texture with proper dimensions
+                carGraphics.generateTexture('car_texture', 70, 30);
 
                 this.textures.generate('white_pixel', { data: ['#'], pixelWidth: 2, pixelHeight: 2 });
             }
