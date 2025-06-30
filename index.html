@@ -2,195 +2,147 @@
 <html>
 <head>
     <title>Phaser Racer Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; }
-        #error {
-            color: white;
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-            font-family: Arial;
-        }
+        body { margin: 0; overflow: hidden; background-color: #000; }
     </style>
 </head>
 <body>
-    <div id="error"></div>
     <script>
-        const config = {
-            type: Phaser.AUTO,
-            width: 900,
-            height: 700,
-            physics: {
-                default: 'matter', // Switch to Matter.js for better physics
-                matter: {
-                    gravity: { y: 0 },
-                    debug: false
-                }
-            },
-            scene: {
-                preload: preload,
-                create: create,
-                update: update
-            }
-        };
-
-        const game = new Phaser.Game(config);
-        let car, cursors;
-        let trackGraphics;
-        
-        // Enhanced track configuration
-        const trackConfig = {
-            outer: { x: 450, y: 350, width: 600, height: 500, radius: 50 },
-            inner: { x: 450, y: 350, width: 400, height: 300, radius: 30 },
-            roadTexture: 'road',
-            grassTexture: 'grass',
-            checkeredTexture: 'checkered'
-        };
-
-        function preload() {
-            this.load.image('car', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAjCAYAAABvR7Y6AAAABmJLR0QA/wD/AP+AdzggAAAAtUlEQVRIx2P4DwQYGPg/oP/v37/vP7/7N0yAhkGGYVhw4CAzMP0DA+MPGhpGA0jA8AwMDB9m/3///j9wMQYGBq4MDAz/h4H7+Q8QJgx4/w8DAwMDD+fPfx+wMTAwMPIwMDD8P31gwPDv/wMMDAxg/Pz+gZGBAR/2vP+BgeG/s/T/oJGhgaGDkYGB4R8GBgb2f2BiYGBgYMDAwMBiQzUoGwY4DAwMWBgYAAB111V0xW5+76gAAAABJRU5ErkJggg==');
-            this.load.image('road', '#444444');
-            this.load.image('grass', '#228B22');
-            this.load.image('checkered', '#ffffff');
-        }
-
-        function create() {
-            // Add debug text
-            this.debugText = this.add.text(10, 10, '', { font: '16px Arial', fill: '#fff' });
-            
-            // Create track with collision
-            createTrack();
-            
-            // Create car with physics body
-            car = this.matter.add.image(450, 600, 'car')
-                .setAngle(-90)
-                .setScale(0.5)
-                .setFriction(0.05)
-                .setBounce(0.2)
-                .setDensity(0.01);
-
-            // Car physics properties
-            car.setFixedRotation(false);
-            car.setAngularVelocity(0);
-            car.setMass(30);
-
-            // Set up controls
-            cursors = this.input.keyboard.createCursorKeys();
-            
-            // Enable physics debugging
-            this.matter.world.drawDebug = false;
-            
-            // Camera follow
-            this.cameras.main.startFollow(car);
-            this.cameras.main.setZoom(1.2);
-            
-            // Add particle effect for engine
-            this.particles = this.add.particles('checkered');
-            this.emitter = this.particles.createEmitter({
-                speed: 100,
-                scale: { start: 0.5, end: 0 },
-                blendMode: 'ADD',
-                follow: car
-            }).stop();
-        }
-
-        function createTrack() {
-            // Simple green background
-            this.add.rectangle(450, 350, 900, 700, 0x228B22);
-            
-            // Draw visible track boundaries
-            const track = this.add.graphics()
-                .fillStyle(0x444444)
-                .fillRoundedRect(
-                    trackConfig.outer.x - trackConfig.outer.width/2,
-                    trackConfig.outer.y - trackConfig.outer.height/2,
-                    trackConfig.outer.width,
-                    trackConfig.outer.height,
-                    trackConfig.outer.radius
-                )
-                .fillStyle(0x228B22)
-                .fillRoundedRect(
-                    trackConfig.inner.x - trackConfig.inner.width/2,
-                    trackConfig.inner.y - trackConfig.inner.height/2,
-                    trackConfig.inner.width,
-                    trackConfig.inner.height,
-                    trackConfig.inner.radius
-                );
-
-            // Enable physics on track boundaries
-            this.matter.add.gameObject(track, {
-                shape: {
-                    type: 'fromVerts',
-                    verts: [
-                        { x: trackConfig.outer.x - trackConfig.outer.width/2, y: trackConfig.outer.y - trackConfig.outer.height/2 },
-                        { x: trackConfig.outer.x + trackConfig.outer.width/2, y: trackConfig.outer.y - trackConfig.outer.height/2 },
-                        { x: trackConfig.outer.x + trackConfig.outer.width/2, y: trackConfig.outer.y + trackConfig.outer.height/2 },
-                        { x: trackConfig.outer.x - trackConfig.outer.width/2, y: trackConfig.outer.y + trackConfig.outer.height/2 }
-                    ]
+        window.onload = function() {
+            // --- GAME CONFIGURATION ---
+            const config = {
+                type: Phaser.AUTO,
+                width: 900,
+                height: 700,
+                physics: {
+                    default: 'matter',
+                    matter: {
+                        gravity: { y: 0 },
+                        debug: false
+                    }
                 },
-                isStatic: true
-            });
-        }
+                scene: {
+                    preload: preload,
+                    create: create,
+                    update: update
+                }
+            };
 
-        function drawTrackGeometry() {
-            // Draw textured track
-            trackLayer
-                .fillStyle(0xffffff)
-                .fillRoundedRect(
-                    trackConfig.outer.x - trackConfig.outer.width/2,
-                    trackConfig.outer.y - trackConfig.outer.height/2,
-                    trackConfig.outer.width,
-                    trackConfig.outer.height,
-                    trackConfig.outer.radius
-                )
-                .fillStyle(0x228B22)
-                .fillRoundedRect(
-                    trackConfig.inner.x - trackConfig.inner.width/2,
-                    trackConfig.inner.y - trackConfig.inner.height/2,
-                    trackConfig.inner.width,
-                    trackConfig.inner.height,
-                    trackConfig.inner.radius
-                );
-        }
+            // --- GLOBAL VARIABLES ---
+            const game = new Phaser.Game(config);
+            let car, cursors;
+            const trackConfig = {
+                outer: new Phaser.Geom.Rectangle(150, 100, 600, 500),
+                inner: new Phaser.Geom.Rectangle(250, 200, 400, 300)
+            };
+            const normalFriction = 0.05;
+            const grassFriction = 0.3;
 
-        function update() {
-            // Update debug text
-            this.debugText.setText([
-                `Position: ${Math.round(car.x)}, ${Math.round(car.y)}`,
-                `Speed: ${Math.round(car.speed)}`,
-                `Rotation: ${Math.round(car.angle)}°`
-            ].join('\n'));
-            
-            // Enhanced controls with analog input
-            const acceleration = cursors.up.isDown ? 0.15 : cursors.down.isDown ? -0.1 : 0;
-            const steering = cursors.left.isDown ? -0.08 : cursors.right.isDown ? 0.08 : 0;
-            
-            // Apply forces
-            this.matter.applyForceFromAngle(car, acceleration * car.mass, car.rotation);
-            
-            // Steering with speed-dependent response
-            const turnRate = Phaser.Math.Clamp(car.speed * 0.002, 0.002, 0.01);
-            car.setAngularVelocity(steering * turnRate * 1000);
+            // --- SCENE FUNCTIONS ---
+            function preload() {
+                // Create a more detailed F1-style car graphic
+                let carGraphics = this.make.graphics({x: 0, y: 0, add: false});
 
-            // Particle effects
-            if (Math.abs(car.angularVelocity) > 0.5 || car.speed > 150) {
-                this.emitter.start();
-            } else {
+                // Rear Spoiler (black rectangle)
+                carGraphics.fillStyle(0x111111);
+                carGraphics.fillRect(0, 2, 5, 26);
+
+                // Wheels (black squares)
+                carGraphics.fillRect(25, 0, 8, 5);  // Front right
+                carGraphics.fillRect(25, 25, 8, 5); // Front left
+                carGraphics.fillRect(5, 0, 8, 5);   // Rear right
+                carGraphics.fillRect(5, 25, 8, 5);  // Rear left
+
+                // Main Body (red polygon with pointy nose)
+                carGraphics.fillStyle(0xff0000);
+                carGraphics.beginPath();
+                carGraphics.moveTo(35, 15); // Pointy nose tip
+                carGraphics.lineTo(15, 5);
+                carGraphics.lineTo(5, 8);
+                carGraphics.lineTo(5, 22);
+                carGraphics.lineTo(15, 25);
+                carGraphics.closePath();
+                carGraphics.fillPath();
+
+                // Cockpit (black circle)
+                carGraphics.fillStyle(0x111111);
+                carGraphics.fillCircle(18, 15, 4);
+                
+                // Set texture size to encompass all parts
+                carGraphics.generateTexture('car_texture', 35, 30);
+
+                this.textures.generate('white_pixel', { data: ['#'], pixelWidth: 2, pixelHeight: 2 });
+            }
+
+            function create() {
+                this.debugText = this.add.text(10, 10, '', { font: '16px Arial', fill: '#fff' }).setDepth(1);
+                
+                createTrack.call(this);
+                
+                // Start car inside the track, rotated to face up
+                car = this.matter.add.image(450, 570, 'car_texture')
+                    .setAngle(-90) // Rotate the right-pointing graphic to face up
+                    .setFrictionAir(normalFriction)
+                    .setMass(10);
+
+                cursors = this.input.keyboard.createCursorKeys();
+                
+                this.cameras.main.startFollow(car, true, 0.08, 0.08);
+                this.cameras.main.setZoom(1.5);
+                
+                this.emitter = this.add.particles(0, 0, 'white_pixel', {
+                    speed: 10,
+                    scale: { start: 0.5, end: 0 },
+                    blendMode: 'ADD',
+                    lifespan: 400
+                });
+                this.emitter.startFollow(car);
                 this.emitter.stop();
             }
 
-            // Track friction effects
-            const body = car.body;
-            if (body) {
-                const velocity = body.velocity;
-                const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
-                const friction = speed > 100 ? 0.1 : 0.02;
-                body.friction = friction;
-                body.frictionAir = 0.01;
+            function createTrack() {
+                this.add.rectangle(450, 350, 900, 700, 0x228B22); // Grass
+                
+                this.add.graphics()
+                    .fillStyle(0x444444)
+                    .fillRectShape(trackConfig.outer)
+                    .fillStyle(0x228B22)
+                    .fillRectShape(trackConfig.inner);
             }
-        }
+
+            function update() {
+                this.debugText.setPosition(this.cameras.main.scrollX + 10, this.cameras.main.scrollY + 10);
+                
+                const onTrack = trackConfig.outer.contains(car.x, car.y) && !trackConfig.inner.contains(car.x, car.y);
+                
+                if (onTrack) {
+                    car.setFrictionAir(normalFriction);
+                    this.debugText.setText([`Speed: ${car.body.speed.toFixed(2)}`, 'On Track']);
+                } else {
+                    car.setFrictionAir(grassFriction);
+                    this.debugText.setText([`Speed: ${car.body.speed.toFixed(2)}`, 'Off Track!']);
+                }
+
+                const acceleration = 0.005;
+                const steering = 0.03;
+
+                if (cursors.left.isDown) car.setAngularVelocity(-steering);
+                else if (cursors.right.isDown) car.setAngularVelocity(steering);
+                else car.setAngularVelocity(0);
+
+                if (cursors.up.isDown) {
+                    const force = new Phaser.Math.Vector2(Math.cos(car.rotation), Math.sin(car.rotation)).scale(acceleration);
+                    car.applyForce(force);
+                }
+
+                if (car.body.speed > 0.1 && onTrack) {
+                    this.emitter.start();
+                } else {
+                    this.emitter.stop();
+                }
+            }
+        };
     </script>
 </body>
 </html>
