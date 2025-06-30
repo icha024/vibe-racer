@@ -47,11 +47,11 @@
                 // Chassis & Nose - Combined for a sleek arrow shape
                 carGraphics.fillStyle(0xFF1801); // Main body color (e.g., Ferrari red)
                 carGraphics.beginPath();
-                carGraphics.moveTo(80, 25);  // Nose tip
-                carGraphics.lineTo(70, 15);  // Front left point
+                carGraphics.moveTo(90, 25);  // Nose tip: Moved further right for longer nose
+                carGraphics.lineTo(80, 15);  // Front left point: Moved right
                 carGraphics.lineTo(20, 15);  // Rear left chassis
                 carGraphics.lineTo(20, 35);  // Rear right chassis
-                carGraphics.lineTo(70, 35);  // Front right point
+                carGraphics.lineTo(80, 35);  // Front right point: Moved right
                 carGraphics.closePath();
                 carGraphics.fillPath();
 
@@ -65,7 +65,7 @@
 
                 // Front Wing (wide and thin)
                 carGraphics.fillStyle(0x333333); // Dark grey for carbon fibre
-                carGraphics.fillRect(75, 5, 10, 40); // Main plane (simulated with a rectangle)
+                carGraphics.fillRect(85, 5, 10, 40); // Main plane (simulated with a rectangle), adjusted for longer nose
 
                 // Rear Wing (T-shape with endplates, distinct from body)
                 carGraphics.fillRect(5, 5, 10, 40); // Vertical endplates
@@ -75,22 +75,22 @@
                 // Wheels (Rectangular/squared off for top-down view)
                 carGraphics.fillStyle(0x111111); // Black for tires
                 // Front Wheels (narrower)
-                carGraphics.fillRect(60, 5, 10, 5); // Front-left wheel
-                carGraphics.fillRect(60, 40, 10, 5); // Front-right wheel
+                carGraphics.fillRect(70, 5, 10, 5); // Front-left wheel: Adjusted for longer nose
+                carGraphics.fillRect(70, 40, 10, 5); // Front-right wheel: Adjusted for longer nose
                 // Rear Wheels (wider)
-                carGraphics.fillRect(15, 0, 15, 5); // Rear-left wheel
-                carGraphics.fillRect(15, 45, 15, 5); // Rear-right wheel
+                carGraphics.fillRect(25, 0, 15, 5); // Rear-left wheel: Moved forward (increased x from 15 to 25)
+                carGraphics.fillRect(25, 45, 15, 5); // Rear-right wheel: Moved forward (increased x from 15 to 25)
 
                 // Add outline for better definition - draw after fill to ensure visibility
                 carGraphics.lineStyle(2, 0x000000); // Black outline for clarity
                 
                 // Outline for Chassis & Nose
                 carGraphics.beginPath();
-                carGraphics.moveTo(80, 25);
-                carGraphics.lineTo(70, 15);
+                carGraphics.moveTo(90, 25); // Updated
+                carGraphics.lineTo(80, 15); // Updated
                 carGraphics.lineTo(20, 15);
                 carGraphics.lineTo(20, 35);
-                carGraphics.lineTo(70, 35);
+                carGraphics.lineTo(80, 35); // Updated
                 carGraphics.closePath();
                 carGraphics.strokePath();
 
@@ -102,7 +102,7 @@
                 carGraphics.strokeRect(50, 20, 15, 10);
 
                 // Outline for Front Wing
-                carGraphics.strokeRect(75, 5, 10, 40);
+                carGraphics.strokeRect(85, 5, 10, 40); // Updated
 
                 // Outline for Rear Wing
                 carGraphics.strokeRect(5, 5, 10, 40);
@@ -110,13 +110,13 @@
                 carGraphics.strokeRect(5, 30, 30, 5);
 
                 // Outline for Wheels
-                carGraphics.strokeRect(60, 5, 10, 5);
-                carGraphics.strokeRect(60, 40, 10, 5);
-                carGraphics.strokeRect(15, 0, 15, 5);
-                carGraphics.strokeRect(15, 45, 15, 5);
+                carGraphics.strokeRect(70, 5, 10, 5); // Updated
+                carGraphics.strokeRect(70, 40, 10, 5); // Updated
+                carGraphics.strokeRect(25, 0, 15, 5); // Updated
+                carGraphics.strokeRect(25, 45, 15, 5); // Updated
 
                 // Generate texture. Adjust dimensions to encompass all parts
-                carGraphics.generateTexture('car_texture', 90, 50); // Wider and taller to fit all elements
+                carGraphics.generateTexture('car_texture', 100, 50); // Increased width to accommodate longer nose
                 this.textures.generate('white_pixel', { data: ['#'], pixelWidth: 2, pixelHeight: 2 });
             }
 
