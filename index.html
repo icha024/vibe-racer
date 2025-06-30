@@ -24,6 +24,9 @@
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
+    <!-- Car Sprite Image (Base64 encoded for single HTML file) -->
+    <!-- This is a simple red top-down car, facing upwards. -->
+    <img id="carSprite" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAjCAYAAABvR7Y6AAAABmJLR0QA/wD/AP+AdzggAAAAtUlEQVRIx2P4DwQYGPg/oP/v37/vP7/7N0yAhkGGYVhw4CAzMP0DA+MPGhpGA0jA8AwMDB9m/3///j9wMQYGBq4MDAz/h4H7+Q8QJgx4/w8DAwMDD+fPfx+wMTAwMPIwMDD8P31gwPDv/wMMDAxg/Pz+gZGBAR/2vP+BgeG/s/T/oJGhgaGDkYGB4R8GBgb2f2BiYGBgYMDAwMBiQzUoGwY4DAwMWBgYAAB111V0xW5+76gAAAABJRU5ErkJggg==" style="display:none;">
 
     <script>
         // Game Constants
@@ -31,13 +34,12 @@
         const CANVAS_HEIGHT = 700;
         const CAR_WIDTH = 20;
         const CAR_HEIGHT = 35; // Car is taller than wide in top-down view
-        const CAR_MAX_SPEED = 5; // Max forward speed
-        const CAR_REVERSE_SPEED = 2.5; // Max reverse speed
-        const CAR_ACCELERATION = 0.1;
-        const CAR_BRAKING = 0.2;
-        const CAR_FRICTION = 0.05; // Constant friction applied to slow down
-        const CAR_OFF_TRACK_FRICTION_MULTIPLIER = 0.8; // Reduces speed significantly off-track
-        const CAR_TURN_RATE = 0.04; // Radians per frame at max speed
+        const CAR_MAX_SPEED = 6; // Max forward speed (increased for more noticeable movement)
+        const CAR_REVERSE_SPEED = 3; // Max reverse speed (increased)
+        const CAR_ACCELERATION = 0.15; // Increased acceleration (more responsive)
+        const CAR_FRICTION = 0.03; // Decreased friction to make movement more fluid
+        const CAR_OFF_TRACK_FRICTION_MULTIPLIER = 0.6; // Reduces speed significantly off-track (more severe effect)
+        const CAR_TURN_RATE = 0.05; // Radians per frame at max speed (increased for quicker turning)
 
         // Game Colors
         const TRACK_COLOR = '#444'; // Dark grey for the road
@@ -47,6 +49,8 @@
 
         // Game Variables
         let canvas, ctx;
+        let carSpriteImage; // Variable to hold the loaded car image element
+
         let car = {
             x: CANVAS_WIDTH / 2,
             y: CANVAS_HEIGHT / 2 + 100, // Starting position on the track
@@ -63,38 +67,106 @@
             ArrowRight: false
         };
 
-        // Track Definition (Rectangular track with an inner rectangular hole)
-        // This creates a simple "donut" shaped track.
-        const trackBounds = {
-            outer: { xMin: 150, yMin: 100, xMax: 750, yMax: 600 },
-            inner: { xMin: 250, yMin: 200, xMax: 650, yMax: 500 }
-        };
+        // Track Definition (for a rounded oval course)
+        // These points define the outer and inner boundaries of the track.
+        // The `TRACK_CORNER_RADIUS` will round the corners.
+        const TRACK_PATH_POINTS_OUTER = [
+            { x: 300, y: 100 }, { x: 600, y: 100 }, // Top straight segment
+            { x: 800, y: 350 }, // Right side midpoint for rounding
+            { x: 600, y: 600 }, { x: 300, y: 600 }, // Bottom straight segment
+            { x: 100, y: 350 }  // Left side midpoint for rounding
+        ];
+        const TRACK_PATH_POINTS_INNER = [
+            { x: 350, y: 200 }, { x: 550, y: 200 }, // Top straight segment
+            { x: 650, y: 350 }, // Right side midpoint for rounding
+            { x: 550, y: 500 }, { x: 350, y: 500 }, // Bottom straight segment
+            { x: 250, y: 350 }  // Left side midpoint for rounding
+        ];
+        const TRACK_CORNER_RADIUS = 70; // Radius for the rounded corners of the track
+
+        // Off-screen canvas for precise collision detection
+        let trackCollisionCanvas;
+        let trackCollisionCtx;
+        // Define specific RGB values for road and grass on the collision map
+        const TRACK_ROAD_COLOR_COLLISION = { r: 0, g: 0, b: 0, a: 255 };     // Pure black for road on collision map
+        const TRACK_GRASS_COLOR_COLLISION = { r: 255, g: 255, b: 255, a: 255 }; // Pure white for grass on collision map
 
         /**
-         * Checks if a point is within a given rectangular boundary.
-         * @param {number} x - The x-coordinate of the point.
-         * @param {number} y - The y-coordinate of the point.
-         * @param {object} rect - An object with xMin, yMin, xMax, yMax properties.
-         * @returns {boolean} True if the point is inside the rectangle, false otherwise.
+         * Draws a closed, rounded path on a given canvas context.
+         * This function helps create the smooth oval track shape.
+         * @param {CanvasRenderingContext2D} context - The 2D rendering context to draw on.
+         * @param {Array<Object>} points - An array of {x, y} objects defining the main corners of the path.
+         * @param {number} radius - The radius for rounding the corners.
          */
-        function isPointInRect(x, y, rect) {
-            return x >= rect.xMin && x <= rect.xMax &&
-                   y >= rect.yMin && y <= rect.yMax;
+        function drawRoundedPath(context, points, radius) {
+            if (points.length < 2) return;
+
+            context.beginPath();
+            // Start at the first point after a small offset to allow arcTo to draw to it
+            context.moveTo(points[0].x + (points[1].x - points[0].x > 0 ? radius : -radius), points[0].y); 
+
+            for (let i = 0; i < points.length; i++) {
+                const p1 = points[i];
+                const p2 = points[(i + 1) % points.length]; // Current corner point
+                const p3 = points[(i + 2) % points.length]; // Next point after the corner
+
+                context.arcTo(p2.x, p2.y, p3.x, p3.y, radius);
+            }
+            context.closePath();
         }
 
         /**
-         * Determines if the car's current position is on the defined track.
-         * The track is defined as the area inside the outer rectangle but outside the inner rectangle.
-         * @returns {boolean} True if the car is on the track, false otherwise.
+         * Initialises the off-screen canvas for track collision detection.
+         * This canvas is drawn only once at startup and used to quickly check if the car is on the road.
+         */
+        function setupTrackCollisionMap() {
+            trackCollisionCanvas = document.createElement('canvas');
+            trackCollisionCanvas.width = CANVAS_WIDTH;
+            trackCollisionCanvas.height = CANVAS_HEIGHT;
+            trackCollisionCtx = trackCollisionCanvas.getContext('2d');
+
+            // 1. Draw grass area (white) on the collision map
+            trackCollisionCtx.fillStyle = `rgb(${TRACK_GRASS_COLOR_COLLISION.r},${TRACK_GRASS_COLOR_COLLISION.g},${TRACK_GRASS_COLOR_COLLISION.b})`;
+            trackCollisionCtx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // 2. Draw road area (black) on the collision map
+            trackCollisionCtx.fillStyle = `rgb(${TRACK_ROAD_COLOR_COLLISION.r},${TRACK_ROAD_COLOR_COLLISION.g},${TRACK_ROAD_COLOR_COLLISION.b})`;
+            
+            // Draw the outer path of the track
+            trackCollisionCtx.beginPath();
+            drawRoundedPath(trackCollisionCtx, TRACK_PATH_POINTS_OUTER, TRACK_CORNER_RADIUS);
+            
+            // Draw the inner path (hole) of the track
+            const reversedInnerPoints = [...TRACK_PATH_POINTS_INNER].reverse();
+            drawRoundedPath(trackCollisionCtx, reversedInnerPoints, TRACK_CORNER_RADIUS);
+            
+            trackCollisionCtx.closePath();
+            trackCollisionCtx.fill('evenodd');
+        }
+
+        /**
+         * Determines if the car's current position is on the defined track by checking the pixel color
+         * at the car's center on the off-screen collision map.
+         * @returns {boolean} True if the car is on the track (road color), false otherwise (grass color or out of bounds).
          */
         function isCarOnTrack() {
-            const carCenterX = car.x;
-            const carCenterY = car.y;
+            // Get the car's center coordinates, rounded to integers for pixel sampling
+            const carCenterX = Math.floor(car.x);
+            const carCenterY = Math.floor(car.y);
 
-            const insideOuter = isPointInRect(carCenterX, carCenterY, trackBounds.outer);
-            const insideInner = isPointInRect(carCenterX, carCenterY, trackBounds.inner);
+            // Check if the car's center is within the canvas bounds
+            if (carCenterX < 0 || carCenterX >= CANVAS_WIDTH || carCenterY < 0 || carCenterY >= CANVAS_HEIGHT) {
+                return false;
+            }
 
-            return insideOuter && !insideInner;
+            // Get the pixel data (RGBA) at the car's center from the collision map
+            const pixel = trackCollisionCtx.getImageData(carCenterX, carCenterY, 1, 1).data;
+            
+            // Compare the pixel color to the defined road color
+            return pixel[0] === TRACK_ROAD_COLOR_COLLISION.r &&
+                   pixel[1] === TRACK_ROAD_COLOR_COLLISION.g &&
+                   pixel[2] === TRACK_ROAD_COLOR_COLLISION.b &&
+                   pixel[3] === TRACK_ROAD_COLOR_COLLISION.a;
         }
 
         // Initialization function called when the window loads
@@ -103,6 +175,11 @@
             ctx = canvas.getContext('2d');
             canvas.width = CANVAS_WIDTH;
             canvas.height = CANVAS_HEIGHT;
+
+            carSpriteImage = document.getElementById('carSprite');
+
+            // Setup the off-screen track collision map before starting the game loop
+            setupTrackCollisionMap();
 
             // Set up event listeners for keyboard input
             window.addEventListener('keydown', (e) => {
@@ -195,38 +272,22 @@
             // 2. Draw Track (Road)
             ctx.fillStyle = TRACK_COLOR;
             ctx.beginPath();
-            // Draw outer rectangle (clockwise)
-            ctx.moveTo(trackBounds.outer.xMin, trackBounds.outer.yMin);
-            ctx.lineTo(trackBounds.outer.xMax, trackBounds.outer.yMin);
-            ctx.lineTo(trackBounds.outer.xMax, trackBounds.outer.yMax);
-            ctx.lineTo(trackBounds.outer.xMin, trackBounds.outer.yMax);
-            ctx.lineTo(trackBounds.outer.xMin, trackBounds.outer.yMin); // Close outer path
+            // Draw the outer path of the track
+            drawRoundedPath(ctx, TRACK_PATH_POINTS_OUTER, TRACK_CORNER_RADIUS);
+            
+            // Draw the inner path to create the hole in the track
+            const reversedInnerPoints = [...TRACK_PATH_POINTS_INNER].reverse();
+            drawRoundedPath(ctx, reversedInnerPoints, TRACK_CORNER_RADIUS);
 
-            // Draw inner rectangle (counter-clockwise to create a "hole" effect)
-            ctx.moveTo(trackBounds.inner.xMin, trackBounds.inner.yMin);
-            ctx.lineTo(trackBounds.inner.xMin, trackBounds.inner.yMax);
-            ctx.lineTo(trackBounds.inner.xMax, trackBounds.inner.yMax);
-            ctx.lineTo(trackBounds.inner.xMax, trackBounds.inner.yMin);
-            ctx.lineTo(trackBounds.inner.xMin, trackBounds.inner.yMin); // Close inner path
-            ctx.closePath(); // Ensure path is closed (important for fillRule)
-            ctx.fill('evenodd'); // Use 'evenodd' fill rule to create the hole
+            ctx.closePath();
+            ctx.fill('evenodd');
 
             // 3. Draw Car
-            ctx.save(); // Save the current canvas state (translation, rotation)
-
-            // Translate and rotate the canvas to the car's position and angle
+            ctx.save();
             ctx.translate(car.x, car.y);
-            ctx.rotate(car.angle);
-
-            // Draw the car body (red rectangle centered on its origin)
-            ctx.fillStyle = CAR_COLOR;
-            ctx.fillRect(-CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
-
-            // Draw a small white rectangle at the 'front' of the car
-            ctx.fillStyle = CAR_FRONT_INDICATOR_COLOR;
-            ctx.fillRect(-CAR_WIDTH / 4, -CAR_HEIGHT / 2, CAR_WIDTH / 2, CAR_HEIGHT / 4);
-
-            ctx.restore(); // Restore the canvas state to what it was before drawing the car
+            ctx.rotate(car.angle + Math.PI / 2); // Adjust rotation for sprite orientation
+            ctx.drawImage(carSpriteImage, -CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
+            ctx.restore();
         }
 
         // Attach the initialization function to the window's load event
