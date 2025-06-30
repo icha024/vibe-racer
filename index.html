@@ -44,79 +44,81 @@
                 let carGraphics = this.make.graphics({x: 0, y: 0, add: false});
                 carGraphics.clear();
 
-                // Chassis & Nose - Combined for a sleek arrow shape
+                // Main Chassis Body (a distinct, slightly tapered rectangle)
                 carGraphics.fillStyle(0xFF1801); // Main body color (e.g., Ferrari red)
+                carGraphics.fillRect(30, 10, 55, 30); // x=30 (rear) to x=85 (front), y=10 (top) to y=40 (bottom)
+
+                // Long Triangular Nose (separate from the main chassis)
                 carGraphics.beginPath();
-                carGraphics.moveTo(90, 25);  // Nose tip: Moved further right for longer nose
-                carGraphics.lineTo(80, 15);  // Front left point: Moved right
-                carGraphics.lineTo(20, 15);  // Rear left chassis
-                carGraphics.lineTo(20, 35);  // Rear right chassis
-                carGraphics.lineTo(80, 35);  // Front right point: Moved right
+                carGraphics.moveTo(110, 25); // Nose tip: Extended further right for much longer nose
+                carGraphics.lineTo(85, 15);  // Base point, top-left (connects to chassis front)
+                carGraphics.lineTo(85, 35);  // Base point, bottom-left (connects to chassis front)
                 carGraphics.closePath();
                 carGraphics.fillPath();
 
-                // Sidepods (subtly wider sections)
-                carGraphics.fillRect(30, 10, 30, 5); // Left sidepod
-                carGraphics.fillRect(30, 35, 30, 5); // Right sidepod
-
-                // Cockpit / Airbox
+                // Cockpit / Airbox (positioned within the main chassis)
                 carGraphics.fillStyle(0x222222); // Darker for cockpit
-                carGraphics.fillRect(50, 20, 15, 10); // Central cockpit area
+                carGraphics.fillRect(65, 20, 15, 10); // Central cockpit area
 
-                // Front Wing (wide and thin)
+                // Front Wing (wide and thin, placed ahead of nose tip)
                 carGraphics.fillStyle(0x333333); // Dark grey for carbon fibre
-                carGraphics.fillRect(85, 5, 10, 40); // Main plane (simulated with a rectangle), adjusted for longer nose
+                carGraphics.fillRect(105, 5, 10, 40); // Main plane, extends beyond nose
 
                 // Rear Wing (T-shape with endplates, distinct from body)
-                carGraphics.fillRect(5, 5, 10, 40); // Vertical endplates
-                carGraphics.fillRect(5, 15, 30, 5); // Upper horizontal element
-                carGraphics.fillRect(5, 30, 30, 5); // Lower horizontal element
+                carGraphics.fillRect(5, 5, 10, 40); // Vertical endplates (x=5 to x=15)
+                carGraphics.fillRect(5, 15, 30, 5); // Upper horizontal element (x=5 to x=35)
+                carGraphics.fillRect(5, 30, 30, 5); // Lower horizontal element (x=5 to x=35)
 
-                // Wheels (Rectangular/squared off for top-down view)
+                // Sidepods (subtly wider sections, aligned with chassis)
+                carGraphics.fillRect(45, 5, 20, 5); // Left sidepod
+                carGraphics.fillRect(45, 40, 20, 5); // Right sidepod
+
+                // Wheels (Rectangular/squared off for top-down view, clearly separate from body/wings)
                 carGraphics.fillStyle(0x111111); // Black for tires
-                // Front Wheels (narrower)
-                carGraphics.fillRect(70, 5, 10, 5); // Front-left wheel: Adjusted for longer nose
-                carGraphics.fillRect(70, 40, 10, 5); // Front-right wheel: Adjusted for longer nose
-                // Rear Wheels (wider)
-                carGraphics.fillRect(25, 0, 15, 5); // Rear-left wheel: Moved forward (increased x from 15 to 25)
-                carGraphics.fillRect(25, 45, 15, 5); // Rear-right wheel: Moved forward (increased x from 15 to 25)
+                // Front Wheels (narrower, positioned next to main chassis, behind front wing)
+                carGraphics.fillRect(80, 5, 10, 5); // Front-left wheel
+                carGraphics.fillRect(80, 40, 10, 5); // Front-right wheel
+                // Rear Wheels (wider, positioned at the rear of the main chassis, well clear of rear wing)
+                carGraphics.fillRect(35, 0, 15, 5); // Rear-left wheel (moved forward from x=25 to x=35)
+                carGraphics.fillRect(35, 45, 15, 5); // Rear-right wheel (moved forward from x=25 to x=35)
 
                 // Add outline for better definition - draw after fill to ensure visibility
                 carGraphics.lineStyle(2, 0x000000); // Black outline for clarity
                 
-                // Outline for Chassis & Nose
+                // Outline for Main Chassis Body
+                carGraphics.strokeRect(30, 10, 55, 30);
+
+                // Outline for Long Triangular Nose
                 carGraphics.beginPath();
-                carGraphics.moveTo(90, 25); // Updated
-                carGraphics.lineTo(80, 15); // Updated
-                carGraphics.lineTo(20, 15);
-                carGraphics.lineTo(20, 35);
-                carGraphics.lineTo(80, 35); // Updated
+                carGraphics.moveTo(110, 25);
+                carGraphics.lineTo(85, 15);
+                carGraphics.lineTo(85, 35);
                 carGraphics.closePath();
                 carGraphics.strokePath();
 
-                // Outline for Sidepods
-                carGraphics.strokeRect(30, 10, 30, 5);
-                carGraphics.strokeRect(30, 35, 30, 5);
-                
                 // Outline for Cockpit
-                carGraphics.strokeRect(50, 20, 15, 10);
+                carGraphics.strokeRect(65, 20, 15, 10);
 
                 // Outline for Front Wing
-                carGraphics.strokeRect(85, 5, 10, 40); // Updated
+                carGraphics.strokeRect(105, 5, 10, 40);
 
                 // Outline for Rear Wing
                 carGraphics.strokeRect(5, 5, 10, 40);
                 carGraphics.strokeRect(5, 15, 30, 5);
                 carGraphics.strokeRect(5, 30, 30, 5);
 
+                // Outline for Sidepods
+                carGraphics.strokeRect(45, 5, 20, 5);
+                carGraphics.strokeRect(45, 40, 20, 5);
+
                 // Outline for Wheels
-                carGraphics.strokeRect(70, 5, 10, 5); // Updated
-                carGraphics.strokeRect(70, 40, 10, 5); // Updated
-                carGraphics.strokeRect(25, 0, 15, 5); // Updated
-                carGraphics.strokeRect(25, 45, 15, 5); // Updated
+                carGraphics.strokeRect(80, 5, 10, 5);
+                carGraphics.strokeRect(80, 40, 10, 5);
+                carGraphics.strokeRect(35, 0, 15, 5);
+                carGraphics.strokeRect(35, 45, 15, 5);
 
                 // Generate texture. Adjust dimensions to encompass all parts
-                carGraphics.generateTexture('car_texture', 100, 50); // Increased width to accommodate longer nose
+                carGraphics.generateTexture('car_texture', 120, 50); // Increased width to accommodate the very long nose
                 this.textures.generate('white_pixel', { data: ['#'], pixelWidth: 2, pixelHeight: 2 });
             }
 
