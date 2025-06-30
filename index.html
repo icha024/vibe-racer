@@ -47,11 +47,11 @@
                 // Chassis & Nose - Combined for a sleek arrow shape
                 carGraphics.fillStyle(0xFF1801); // Main body color (e.g., Ferrari red)
                 carGraphics.beginPath();
-                carGraphics.moveTo(80, 25);  // Nose tip
-                carGraphics.lineTo(70, 15);  // Front left point
-                carGraphics.lineTo(20, 15);  // Rear left chassis
-                carGraphics.lineTo(20, 35);  // Rear right chassis
-                carGraphics.lineTo(70, 35);  // Front right point
+                carGraphics.moveTo(85, 25);  // Nose tip (longer)
+                carGraphics.lineTo(70, 15);  // Front left point (sharper nose angle)
+                carGraphics.lineTo(25, 15);  // Rear left chassis (shorter body)
+                carGraphics.lineTo(25, 35);  // Rear right chassis (shorter body)
+                carGraphics.lineTo(70, 35);  // Front right point (sharper nose angle)
                 carGraphics.closePath();
                 carGraphics.fillPath();
 
@@ -86,10 +86,10 @@
                 
                 // Outline for Chassis & Nose
                 carGraphics.beginPath();
-                carGraphics.moveTo(80, 25);
+                carGraphics.moveTo(85, 25);
                 carGraphics.lineTo(70, 15);
-                carGraphics.lineTo(20, 15);
-                carGraphics.lineTo(20, 35);
+                carGraphics.lineTo(25, 15);
+                carGraphics.lineTo(25, 35);
                 carGraphics.lineTo(70, 35);
                 carGraphics.closePath();
                 carGraphics.strokePath();
