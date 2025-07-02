@@ -13,8 +13,8 @@
             // --- GAME CONFIGURATION ---
             const config = {
                 type: Phaser.AUTO,
-                width: 900,
-                height: 700,
+                width: 1600,
+                height: 1000,
                 physics: {
                     default: 'matter',
                     matter: {
@@ -32,10 +32,7 @@
             // --- GLOBAL VARIABLES ---
             const game = new Phaser.Game(config);
             let car, cursors;
-            const trackConfig = {
-                outer: new Phaser.Geom.Rectangle(150, 100, 600, 500),
-                inner: new Phaser.Geom.Rectangle(250, 200, 400, 300)
-            };
+            let trackOuter, trackInner;
             const normalFriction = 0.05;
             const grassFriction = 0.3;
 
@@ -123,10 +120,50 @@
             function create() {
                 this.debugText = this.add.text(10, 10, '', { font: '16px Arial', fill: '#fff' }).setDepth(1);
                 
+                // --- Create Track Polygons ---
+                const trackWidth = 150;
+                const outerWidth = 1400;
+                const outerHeight = 800;
+                const outerX = (config.width - outerWidth) / 2;
+                const outerY = (config.height - outerHeight) / 2;
+                const radius = 200;
+
+                // Outer path
+                const outerPath = new Phaser.Curves.Path(outerX + radius, outerY);
+                outerPath.lineTo(outerX + outerWidth - radius, outerY);
+                outerPath.add(new Phaser.Curves.Ellipse(outerX + outerWidth - radius, outerY + radius, radius, radius, 270, 360, false));
+                outerPath.lineTo(outerX + outerWidth, outerY + outerHeight - radius);
+                outerPath.add(new Phaser.Curves.Ellipse(outerX + outerWidth - radius, outerY + outerHeight - radius, radius, radius, 0, 90, false));
+                outerPath.lineTo(outerX + radius, outerY + outerHeight);
+                outerPath.add(new Phaser.Curves.Ellipse(outerX + radius, outerY + outerHeight - radius, radius, radius, 90, 180, false));
+                outerPath.lineTo(outerX, outerY + radius);
+                outerPath.add(new Phaser.Curves.Ellipse(outerX + radius, outerY + radius, radius, radius, 180, 270, false));
+                outerPath.closePath();
+                trackOuter = new Phaser.Geom.Polygon(outerPath.getPoints(64));
+
+                // Inner path
+                const innerX = outerX + trackWidth;
+                const innerY = outerY + trackWidth;
+                const innerWidth = outerWidth - 2 * trackWidth;
+                const innerHeight = outerHeight - 2 * trackWidth;
+                const innerRadius = radius > trackWidth ? radius - trackWidth : 0;
+
+                const innerPath = new Phaser.Curves.Path(innerX + innerRadius, innerY);
+                innerPath.lineTo(innerX + innerWidth - innerRadius, innerY);
+                innerPath.add(new Phaser.Curves.Ellipse(innerX + innerWidth - innerRadius, innerY + innerRadius, innerRadius, innerRadius, 270, 360, false));
+                innerPath.lineTo(innerX + innerWidth, innerY + innerHeight - innerRadius);
+                innerPath.add(new Phaser.Curves.Ellipse(innerX + innerWidth - innerRadius, innerY + innerHeight - innerRadius, innerRadius, innerRadius, 0, 90, false));
+                innerPath.lineTo(innerX + innerRadius, innerY + innerHeight);
+                innerPath.add(new Phaser.Curves.Ellipse(innerX + innerRadius, innerY + innerHeight - innerRadius, innerRadius, innerRadius, 90, 180, false));
+                innerPath.lineTo(innerX, innerY + innerRadius);
+                innerPath.add(new Phaser.Curves.Ellipse(innerX + innerRadius, innerY + innerRadius, innerRadius, innerRadius, 180, 270, false));
+                innerPath.closePath();
+                trackInner = new Phaser.Geom.Polygon(innerPath.getPoints(64));
+
                 createTrack.call(this);
                 
                 // Start car inside the track, rotated to face up
-                car = this.matter.add.image(450, 570, 'car_texture')
+                car = this.matter.add.image(config.width / 2, config.height - outerY - trackWidth / 2, 'car_texture')
                     .setAngle(-90) // Rotate the right-pointing graphic to face up
                     .setFrictionAir(normalFriction)
                     .setMass(10);
@@ -134,7 +171,7 @@
                 cursors = this.input.keyboard.createCursorKeys();
                 
                 this.cameras.main.startFollow(car, true, 0.08, 0.08);
-                this.cameras.main.setZoom(1.5);
+                this.cameras.main.setZoom(1.2);
                 
                 this.emitter = this.add.particles(0, 0, 'white_pixel', {
                     speed: 10,
@@ -147,19 +184,20 @@
             }
 
             function createTrack() {
-                this.add.rectangle(450, 350, 900, 700, 0x228B22); // Grass
+                this.add.rectangle(config.width / 2, config.height / 2, config.width, config.height, 0x228B22); // Grass
                 
-                this.add.graphics()
-                    .fillStyle(0x444444)
-                    .fillRectShape(trackConfig.outer)
-                    .fillStyle(0x228B22)
-                    .fillRectShape(trackConfig.inner);
+                const graphics = this.add.graphics();
+                graphics.fillStyle(0x444444);
+                graphics.fillPoints(trackOuter.points, true);
+                
+                graphics.fillStyle(0x228B22);
+                graphics.fillPoints(trackInner.points, true);
             }
 
             function update() {
                 this.debugText.setPosition(this.cameras.main.scrollX + 10, this.cameras.main.scrollY + 10);
                 
-                const onTrack = trackConfig.outer.contains(car.x, car.y) && !trackConfig.inner.contains(car.x, car.y);
+                const onTrack = Phaser.Geom.Polygon.ContainsPoint(trackOuter, car) && !Phaser.Geom.Polygon.ContainsPoint(trackInner, car);
                 
                 if (onTrack) {
                     car.setFrictionAir(normalFriction);
