@@ -121,50 +121,41 @@
                 this.debugText = this.add.text(10, 10, '', { font: '16px Arial', fill: '#fff' }).setDepth(1);
                 
                 // --- Create Track Polygons ---
-                const trackWidth = 150;
+                const trackWidth = 120;
                 const outerWidth = 1400;
                 const outerHeight = 800;
-                const outerX = (config.width - outerWidth) / 2;
-                const outerY = (config.height - outerHeight) / 2;
-                const radius = 200;
+                const centerX = config.width / 2;
+                const centerY = config.height / 2;
+
+                const outerRadius = outerHeight / 2;
+                const outerStraight = outerWidth - outerHeight;
 
                 // Outer path
-                const outerPath = new Phaser.Curves.Path(outerX + radius, outerY);
-                outerPath.lineTo(outerX + outerWidth - radius, outerY);
-                outerPath.add(new Phaser.Curves.Ellipse(outerX + outerWidth - radius, outerY + radius, radius, radius, 270, 360, false));
-                outerPath.lineTo(outerX + outerWidth, outerY + outerHeight - radius);
-                outerPath.add(new Phaser.Curves.Ellipse(outerX + outerWidth - radius, outerY + outerHeight - radius, radius, radius, 0, 90, false));
-                outerPath.lineTo(outerX + radius, outerY + outerHeight);
-                outerPath.add(new Phaser.Curves.Ellipse(outerX + radius, outerY + outerHeight - radius, radius, radius, 90, 180, false));
-                outerPath.lineTo(outerX, outerY + radius);
-                outerPath.add(new Phaser.Curves.Ellipse(outerX + radius, outerY + radius, radius, radius, 180, 270, false));
+                const outerPath = new Phaser.Curves.Path(centerX - outerStraight / 2, centerY - outerRadius);
+                outerPath.lineTo(centerX + outerStraight / 2, centerY - outerRadius);
+                outerPath.add(new Phaser.Curves.Ellipse(centerX + outerStraight / 2, centerY, outerRadius, outerRadius, -90, 90, false));
+                outerPath.lineTo(centerX - outerStraight / 2, centerY + outerRadius);
+                outerPath.add(new Phaser.Curves.Ellipse(centerX - outerStraight / 2, centerY, outerRadius, outerRadius, 90, 270, false));
                 outerPath.closePath();
-                trackOuter = new Phaser.Geom.Polygon(outerPath.getPoints(64));
+                trackOuter = new Phaser.Geom.Polygon(outerPath.getPoints(128));
 
                 // Inner path
-                const innerX = outerX + trackWidth;
-                const innerY = outerY + trackWidth;
-                const innerWidth = outerWidth - 2 * trackWidth;
-                const innerHeight = outerHeight - 2 * trackWidth;
-                const innerRadius = radius > trackWidth ? radius - trackWidth : 0;
+                const innerRadius = outerRadius - trackWidth;
+                const innerStraight = outerWidth - outerHeight;
 
-                const innerPath = new Phaser.Curves.Path(innerX + innerRadius, innerY);
-                innerPath.lineTo(innerX + innerWidth - innerRadius, innerY);
-                innerPath.add(new Phaser.Curves.Ellipse(innerX + innerWidth - innerRadius, innerY + innerRadius, innerRadius, innerRadius, 270, 360, false));
-                innerPath.lineTo(innerX + innerWidth, innerY + innerHeight - innerRadius);
-                innerPath.add(new Phaser.Curves.Ellipse(innerX + innerWidth - innerRadius, innerY + innerHeight - innerRadius, innerRadius, innerRadius, 0, 90, false));
-                innerPath.lineTo(innerX + innerRadius, innerY + innerHeight);
-                innerPath.add(new Phaser.Curves.Ellipse(innerX + innerRadius, innerY + innerHeight - innerRadius, innerRadius, innerRadius, 90, 180, false));
-                innerPath.lineTo(innerX, innerY + innerRadius);
-                innerPath.add(new Phaser.Curves.Ellipse(innerX + innerRadius, innerY + innerRadius, innerRadius, innerRadius, 180, 270, false));
+                const innerPath = new Phaser.Curves.Path(centerX - innerStraight / 2, centerY - innerRadius);
+                innerPath.lineTo(centerX + innerStraight / 2, centerY - innerRadius);
+                innerPath.add(new Phaser.Curves.Ellipse(centerX + innerStraight / 2, centerY, innerRadius, innerRadius, -90, 90, false));
+                innerPath.lineTo(centerX - innerStraight / 2, centerY + innerRadius);
+                innerPath.add(new Phaser.Curves.Ellipse(centerX - innerStraight / 2, centerY, innerRadius, innerRadius, 90, 270, false));
                 innerPath.closePath();
-                trackInner = new Phaser.Geom.Polygon(innerPath.getPoints(64));
+                trackInner = new Phaser.Geom.Polygon(innerPath.getPoints(128));
 
                 createTrack.call(this);
                 
-                // Start car inside the track, rotated to face up
-                car = this.matter.add.image(config.width / 2, config.height - outerY - trackWidth / 2, 'car_texture')
-                    .setAngle(-90) // Rotate the right-pointing graphic to face up
+                // Start car on the main straight
+                car = this.matter.add.image(centerX, centerY + outerRadius - trackWidth / 2, 'car_texture')
+                    .setAngle(0) // Face right
                     .setFrictionAir(normalFriction)
                     .setMass(10);
 
@@ -207,7 +198,7 @@
                     this.debugText.setText([`Speed: ${car.body.speed.toFixed(2)}`, 'Off Track!']);
                 }
 
-                const acceleration = 0.005;
+                const acceleration = 0.015;
                 const steering = 0.03;
 
                 if (cursors.left.isDown) car.setAngularVelocity(-steering);
