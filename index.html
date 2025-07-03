@@ -38,83 +38,88 @@
                     this.innerPolygon = this.createTrackPolygon(centerX, centerY, OUTER_WIDTH - (TRACK_WIDTH * 2), OUTER_HEIGHT - (TRACK_WIDTH * 2));
 
                     this.startPosition = {
-                        x: centerX - (OUTER_WIDTH * 0.25),
-                        y: centerY + (OUTER_HEIGHT * 0.25)
+                        x: centerX + (OUTER_WIDTH * 0.35), // Position on the right straight
+                        y: centerY
                     };
                 }
 
                 createTrackPolygon(centerX, centerY, width, height) {
-                    // Create a 'P' shape rotated 90 degrees clockwise as a closed circuit
-                    // The 'P' will be oriented horizontally with rounded corners
-    
                     const points = [];
-    
-                    // Scale factors for the P shape
-                    const w = width * 0.7; // Use more of the available width
-                    const h = height * 0.7; // Use more of the available height
-                    const stemWidth = w * 0.25;
-                    const topHeight = h * 0.35;
-                    const cornerRadius = Math.min(stemWidth * 0.3, topHeight * 0.3);
-    
-                    // Starting point (bottom left of the stem)
-                    const startX = centerX - w/2;
-                    const startY = centerY + h/2;
-    
-                    // Bottom left corner (rounded)
-                    this.addRoundedCorner(points, startX + cornerRadius, startY, cornerRadius, 180, 270);
-    
-                    // Bottom horizontal line
-                    points.push(new Phaser.Math.Vector2(startX + stemWidth - cornerRadius, startY));
-    
-                    // Bottom right of stem (rounded corner)
-                    this.addRoundedCorner(points, startX + stemWidth - cornerRadius, startY - cornerRadius, cornerRadius, 270, 360);
-    
-                    // Right side of stem going up
-                    points.push(new Phaser.Math.Vector2(startX + stemWidth, centerY - h/2 + topHeight + cornerRadius));
-    
-                    // Corner before middle horizontal
-                    this.addRoundedCorner(points, startX + stemWidth + cornerRadius, centerY - h/2 + topHeight + cornerRadius, cornerRadius, 180, 270);
-    
-                    // Middle horizontal line going right
-                    points.push(new Phaser.Math.Vector2(startX + w - stemWidth - cornerRadius, centerY - h/2 + topHeight));
-    
-                    // Top right corner of middle section
-                    this.addRoundedCorner(points, startX + w - stemWidth - cornerRadius, centerY - h/2 + topHeight - cornerRadius, cornerRadius, 0, 90);
-    
-                    // Right side of top section going up
-                    points.push(new Phaser.Math.Vector2(startX + w - stemWidth, centerY - h/2 + cornerRadius));
-    
-                    // Top right corner
-                    this.addRoundedCorner(points, startX + w - stemWidth - cornerRadius, centerY - h/2 + cornerRadius, cornerRadius, 270, 360);
-    
-                    // Top horizontal line
-                    points.push(new Phaser.Math.Vector2(startX + cornerRadius, centerY - h/2));
-    
-                    // Top left corner
-                    this.addRoundedCorner(points, startX + cornerRadius, centerY - h/2 + cornerRadius, cornerRadius, 180, 270);
-    
-                    // Left side going down
-                    points.push(new Phaser.Math.Vector2(startX, startY - cornerRadius));
-    
+                    const radiusX = width * 0.4;
+                    const radiusY = height * 0.35;
+                    const segments = 32; // Number of segments for smooth curves
+
+                    // Create an oval with some interesting variations
+                    for (let i = 0; i < segments; i++) {
+                        const angle = (i / segments) * Math.PI * 2;
+
+                        // Add some variation to make it more interesting
+                        let x, y;
+
+                        if (i < segments * 0.25 || i > segments * 0.75) {
+                            // Straights on left and right - make them slightly longer
+                            const t = (i < segments * 0.25) ? i / (segments * 0.25) : (i - segments * 0.75) / (segments * 0.25);
+                            x = centerX + Math.cos(angle) * radiusX * (1 + 0.2 * Math.sin(t * Math.PI));
+                            y = centerY + Math.sin(angle) * radiusY;
+                        } else {
+                            // Curves - add some banking effect
+                            x = centerX + Math.cos(angle) * radiusX;
+                            y = centerY + Math.sin(angle) * radiusY * (1 + 0.1 * Math.sin(angle * 2));
+                        }
+
+                        points.push(new Phaser.Math.Vector2(x, y));
+                    }
+
                     return new Phaser.Geom.Polygon(points);
                 }
 
-                addRoundedCorner(points, centerX, centerY, radius, startAngle, endAngle) {
-                    const steps = 8; // Number of points for the curve
-                    for (let i = 0; i <= steps; i++) {
-                        const angle = Phaser.Math.DegToRad(startAngle + (endAngle - startAngle) * (i / steps));
-                        const x = centerX + Math.cos(angle) * radius;
-                        const y = centerY + Math.sin(angle) * radius;
-                        points.push(new Phaser.Math.Vector2(x, y));
-                    }
-                }
-
                 draw() {
-                    // Tarmac
-                    this.graphics.fillStyle(0x444444);
+                    // Grass background (already drawn in scene)
+
+                    // Outer track boundary (darker for contrast)
+                    this.graphics.fillStyle(0x333333);
                     this.graphics.fillPoints(this.outerPolygon.points, true);
 
-                    // Inner grass
+                    // Main track surface
+                    this.graphics.fillStyle(0x555555);
+                    this.graphics.fillPoints(this.innerPolygon.points, true);
+
+                    // Add racing line (optimal path)
+                    this.graphics.lineStyle(3, 0x888888, 0.6);
+                    const racingLinePoints = [];
+                    const segments = 32;
+                    const centerX = OUTER_WIDTH;
+                    const centerY = OUTER_HEIGHT;
+                    const lineRadiusX = (OUTER_WIDTH - TRACK_WIDTH) * 0.35;
+                    const lineRadiusY = (OUTER_HEIGHT - TRACK_WIDTH) * 0.3;
+
+                    for (let i = 0; i <= segments; i++) {
+                        const angle = (i / segments) * Math.PI * 2;
+                        const x = centerX + Math.cos(angle) * lineRadiusX;
+                        const y = centerY + Math.sin(angle) * lineRadiusY;
+                        racingLinePoints.push(new Phaser.Math.Vector2(x, y));
+                    }
+
+                    this.graphics.strokePoints(racingLinePoints, false, true);
+
+                    // Add start/finish line
+                    this.graphics.lineStyle(4, 0xFFFFFF);
+                    const startLineX = this.startPosition.x;
+                    const startLineY1 = this.startPosition.y - TRACK_WIDTH * 0.8;
+                    const startLineY2 = this.startPosition.y + TRACK_WIDTH * 0.8;
+                    this.graphics.lineBetween(startLineX, startLineY1, startLineX, startLineY2);
+
+                    // Add checkered pattern to start line
+                    this.graphics.fillStyle(0x000000);
+                    for (let i = 0; i < 8; i++) {
+                        if (i % 2 === 0) {
+                            const y = startLineY1 + (i * (startLineY2 - startLineY1) / 8);
+                            const height = (startLineY2 - startLineY1) / 8;
+                            this.graphics.fillRect(startLineX - 2, y, 4, height);
+                        }
+                    }
+
+                    // Inner grass area
                     this.graphics.fillStyle(0x228B22);
                     this.graphics.fillPoints(this.innerPolygon.points, true);
                 }
