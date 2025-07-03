@@ -33,7 +33,7 @@
             const OUTER_HEIGHT = 3200; // Changed from 1600 to 3200
             const CAR_FRICTION = {
                 NORMAL: 0.05,
-                GRASS: 0.3
+                GRASS: 0.085
             };
             const CAR_CONTROLS = {
                 ACCELERATION: 0.0075, // Half the original speed
@@ -381,7 +381,7 @@
                     console.log('Track outer polygon points:', this.track.outerPolygon.points);
                     console.log('Game config width:', this.game.config.width, 'height:', this.game.config.height);
 
-                    this.lapCount = 0;
+                    this.lapCount = -2;
                     this.hasPassedFinish = false;
                     this.lapText = this.add.text(10, 50, 'Lap: 1', {
                         font: '20px Arial',
@@ -517,44 +517,26 @@
                     const buttonSize = 80;
                     const padding = 30;
 
-                    const w = this.sys.game.renderer.width;
-                    const h = this.sys.game.renderer.height;
+                    const w = this.sys.game.config.width;
+                    const h = this.sys.game.config.height;
 
                     const isPortrait = h > w;
 
                     let leftBtnPos, rightBtnPos, accelBtnPos;
 
-                    // Move controls up by 2 button lengths
-                    const verticalOffset = 0.1 * buttonSize;
-
                     if (isPortrait) {
-                        // Portrait layout
-                        accelBtnPos = {
-                            x: w - padding - (buttonSize / 2),
-                            y: h - padding - (buttonSize / 2) - verticalOffset
-                        };
-                        rightBtnPos = {
-                            x: padding + (buttonSize / 2),
-                            y: h - padding - (buttonSize / 2) - verticalOffset
-                        };
-                        leftBtnPos = {
-                            x: padding + (buttonSize / 2),
-                            y: h - padding - buttonSize - padding - (buttonSize / 2) - verticalOffset
-                        };
+                        // Portrait layout - controls at bottom
+                        const bottomY = h - padding - (buttonSize / 2);
+                        accelBtnPos = { x: w - padding - (buttonSize / 2), y: bottomY };
+                        leftBtnPos = { x: padding + (buttonSize / 2), y: bottomY };
+                        rightBtnPos = { x: leftBtnPos.x + buttonSize + padding, y: bottomY };
+
                     } else {
-                        // Landscape layout
-                        accelBtnPos = {
-                            x: w - padding - (buttonSize / 2),
-                            y: h - padding - (buttonSize / 2)
-                        };
-                        leftBtnPos = {
-                            x: padding + (buttonSize / 2),
-                            y: h - padding - (buttonSize / 2)
-                        };
-                        rightBtnPos = {
-                            x: padding + buttonSize + padding + (buttonSize / 2),
-                            y: h - padding - (buttonSize / 2)
-                        };
+                        // Landscape layout - controls at bottom right and left
+                        const bottomY = h - padding - (buttonSize / 2);
+                        accelBtnPos = { x: w - padding - (buttonSize / 2), y: bottomY };
+                        leftBtnPos = { x: padding + (buttonSize / 2), y: bottomY };
+                        rightBtnPos = { x: leftBtnPos.x + buttonSize + padding, y: bottomY };
                     }
 
                     this.leftButton.setPosition(leftBtnPos.x, leftBtnPos.y);
@@ -580,8 +562,8 @@
                     mode: Phaser.Scale.FIT,
                     autoCenter: Phaser.Scale.CENTER_BOTH,
                     parent: 'game-container',
-                    width: 1080,
-                    height: 1920
+                    width: 540,  // Half of the original resolution
+                    height: 960, // Half of the original resolution
                 },
                 physics: {
                     default: 'matter',
