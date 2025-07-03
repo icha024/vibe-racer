@@ -4,7 +4,17 @@
     <title>Phaser Racer Pro - Refactored</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; }
+        body { 
+            margin: 0; 
+            padding: 0;
+            overflow: hidden; 
+            background-color: #000;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
     </style>
 </head>
 <body>
@@ -455,24 +465,26 @@
                     // Position mobile controls relative to camera
                     if (this.isMobile) {
                         const buttonSize = 80;
-                        const margin = 20;
-            
+                        const margin = 30;
+                        const gameWidth = this.sys.game.config.width;
+                        const gameHeight = this.sys.game.config.height;
+
                         // Position buttons relative to camera viewport
                         this.leftButton.setPosition(
                             this.cameras.main.scrollX + margin + buttonSize/2,
-                            this.cameras.main.scrollY + this.game.config.height - margin - buttonSize/2
+                            this.cameras.main.scrollY + gameHeight - margin - buttonSize/2
                         );
-            
+
                         this.rightButton.setPosition(
-                            this.cameras.main.scrollX + margin + buttonSize + 20 + buttonSize/2,
-                            this.cameras.main.scrollY + this.game.config.height - margin - buttonSize/2
+                            this.cameras.main.scrollX + margin + buttonSize + 30 + buttonSize/2,
+                            this.cameras.main.scrollY + gameHeight - margin - buttonSize/2
                         );
-            
+
                         this.accelerateButton.setPosition(
-                            this.cameras.main.scrollX + this.game.config.width - margin - buttonSize/2,
-                            this.cameras.main.scrollY + this.game.config.height - margin - buttonSize/2
+                            this.cameras.main.scrollX + gameWidth - margin - buttonSize/2,
+                            this.cameras.main.scrollY + gameHeight - margin - buttonSize/2
                         );
-            
+
                         // Update text positions to match buttons
                         this.children.list.forEach(child => {
                             if (child.type === 'Text' && (child.text === '←' || child.text === '→' || child.text === '↑')) {
@@ -520,13 +532,17 @@
             // --- GAME CONFIGURATION ---
             const config = {
                 type: Phaser.AUTO,
-                width: 1200, // Viewport width
-                height: 800,  // Viewport height
+                width: window.innerWidth,
+                height: window.innerHeight,
+                scale: {
+                    mode: Phaser.Scale.RESIZE,
+                    autoCenter: Phaser.Scale.CENTER_BOTH
+                },
                 physics: {
                     default: 'matter',
                     matter: {
                         gravity: { y: 0 },
-                        debug: false // Re-enabled for debugging
+                        debug: false
                     }
                 },
                 scene: [GameScene]
@@ -534,7 +550,18 @@
 
             // --- START GAME ---
             const game = new Phaser.Game(config);
+
+            // Add after: const game = new Phaser.Game(config);
+            window.addEventListener('resize', () => {
+                game.scale.resize(window.innerWidth, window.innerHeight);
+            });
         };
     </script>
 </body>
 </html>
+canvas {
+    display: block;
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: contain;
+}
