@@ -1,5 +1,7 @@
 # Vibe-coder racer game
 
+Coded (mostly) with AI.
+
 - Created with Gemini CLI
 - Hit a snag and went Aider/Deepseek R1 to polish
 - R1 got stuck on modeling the car, went back to Gemini
@@ -9,3 +11,8 @@
 - Gemini can't figure it out either
 - Manually jumped in to debug got the controlled fixed
 - Manual polishing, it got things like 'lap count' offset wrong, trivial fix (hack)
+
+Give it a spin at:
+https://www.clianz.com/vibe-racer/
+
+![Screenshot of Vibe Racer in action!](screenshot.png)
