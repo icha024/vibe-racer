@@ -529,6 +529,40 @@
                 }
             }
 
+            positionMobileControls() {
+                const buttonSize = 80;
+                const margin = 30;
+                const gameWidth = this.cameras.main.width;
+                const gameHeight = this.cameras.main.height;
+
+                // Position buttons relative to camera viewport (fixed to screen)
+                this.leftButton.setPosition(
+                    margin + buttonSize/2,
+                    gameHeight - margin - buttonSize/2
+                );
+
+                this.rightButton.setPosition(
+                    margin + buttonSize + 30 + buttonSize/2,
+                    gameHeight - margin - buttonSize/2
+                );
+
+                this.accelerateButton.setPosition(
+                    gameWidth - margin - buttonSize/2,
+                    gameHeight - margin - buttonSize/2
+                );
+
+                // Update text positions to match buttons
+                this.leftButtonText.setPosition(this.leftButton.x, this.leftButton.y);
+                this.rightButtonText.setPosition(this.rightButton.x, this.rightButton.y);
+                this.accelerateButtonText.setPosition(this.accelerateButton.x, this.accelerateButton.y);
+            }
+
+            resize(gameSize) {
+                if (this.isMobile) {
+                    this.positionMobileControls();
+                }
+            }
+
             // --- GAME CONFIGURATION ---
             const config = {
                 type: Phaser.AUTO,
