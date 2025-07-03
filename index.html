@@ -213,6 +213,9 @@
                     console.log('Track outer polygon points:', this.track.outerPolygon.points);
                     console.log('Game config width:', this.game.config.width, 'height:', this.game.config.height);
                     
+                    // Set the camera's position to the car's initial position
+                    this.cameras.main.setScroll(this.car.sprite.x - this.game.config.width / 2, this.car.sprite.y - this.game.config.height / 2);
+
                     this.cursors = this.input.keyboard.createCursorKeys();
                     
                     this.cameras.main.startFollow(this.car.sprite, true, 0.1, 0.1); // Adjusted lerping for smoother follow
