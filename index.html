@@ -42,9 +42,9 @@
                     const radiusY = OUTER_HEIGHT * 0.35;
 
                     this.startPosition = {
-                        x: centerX + (radiusX * 0.8), // Position on the right side of the track
+                        x: centerX + (radiusX * 0.6), // Move closer to track center
                         y: centerY,
-                        angle: Math.PI // Face towards the track (180 degrees)
+                        angle: 0 // Face forward along the track
                     };
                 }
 
@@ -107,49 +107,30 @@
 
                     this.graphics.strokePoints(racingLinePoints, false, true);
 
-                    // Add start/finish line with proper positioning
-                    this.graphics.lineStyle(6, 0xFFFFFF);
-                    const finishLineAngle = 0; // Horizontal line
-                    const finishLineLength = TRACK_WIDTH * 0.9;
+                    // Add checkered finish line across the track
+                    const finishLineAngle = Math.PI / 2; // Vertical line across track
+                    const finishLineLength = TRACK_WIDTH * 0.8;
                     const finishX1 = this.startPosition.x - Math.sin(finishLineAngle) * finishLineLength / 2;
                     const finishY1 = this.startPosition.y - Math.cos(finishLineAngle) * finishLineLength / 2;
                     const finishX2 = this.startPosition.x + Math.sin(finishLineAngle) * finishLineLength / 2;
                     const finishY2 = this.startPosition.y + Math.cos(finishLineAngle) * finishLineLength / 2;
 
-                    this.graphics.lineBetween(finishX1, finishY1, finishX2, finishY2);
-
-                    // Add checkered pattern to finish line
-                    this.graphics.fillStyle(0x000000);
-                    const numSquares = 12;
+                    // Create checkered pattern across the track
+                    const numSquares = 16;
                     const squareSize = finishLineLength / numSquares;
 
                     for (let i = 0; i < numSquares; i++) {
-                        if (i % 2 === 0) {
-                            const t = i / numSquares;
-                            const x = finishX1 + (finishX2 - finishX1) * t;
-                            const y = finishY1 + (finishY2 - finishY1) * t;
-
-                            // Create checkered squares
-                            const offsetX = Math.sin(finishLineAngle) * squareSize / 2;
-                            const offsetY = Math.cos(finishLineAngle) * squareSize / 2;
-
-                            this.graphics.fillRect(x - 3, y - offsetY, 6, squareSize);
-                        }
+                        const t = i / numSquares;
+                        const x = finishX1 + (finishX2 - finishX1) * t;
+                        const y = finishY1 + (finishY2 - finishY1) * t;
+    
+                        // Alternate black and white squares
+                        const color = (i % 2 === 0) ? 0xFFFFFF : 0x000000;
+                        this.graphics.fillStyle(color);
+    
+                        // Create square perpendicular to the line
+                        this.graphics.fillRect(x - 4, y - squareSize/2, 8, squareSize);
                     }
-
-                    // Add "FINISH" text
-                    this.finishText = this.scene.add.text(
-                        this.startPosition.x - 40,
-                        this.startPosition.y - TRACK_WIDTH * 0.6,
-                        'FINISH',
-                        {
-                            fontSize: '24px',
-                            fontFamily: 'Arial',
-                            color: '#FFFFFF',
-                            stroke: '#000000',
-                            strokeThickness: 2
-                        }
-                    ).setDepth(5);
 
                     // Inner grass area
                     this.graphics.fillStyle(0x228B22);
@@ -284,34 +265,34 @@
 
                 updateTyreTracks() {
                     this.trackTimer++;
-
+    
                     // Only add tracks when moving and on track
-                    if (this.sprite.body.speed > 0.5 && this.trackTimer % 8 === 0) {
+                    if (this.sprite.body.speed > 0.5 && this.trackTimer % 6 === 0) {
                         const distance = Phaser.Math.Distance.Between(
                             this.sprite.x, this.sprite.y,
                             this.lastTrackPosition.x, this.lastTrackPosition.y
                         );
-
-                        if (distance > 15) {
-                            // Add left wheel track
-                            const leftOffset = new Phaser.Math.Vector2(-12, 0).rotate(this.sprite.rotation);
-                            const leftTrack = this.scene.add.circle(
+        
+                        if (distance > 12) {
+                            // Add left wheel track (darker and more visible)
+                            const leftOffset = new Phaser.Math.Vector2(-15, 0).rotate(this.sprite.rotation);
+                            const leftTrack = this.scene.add.ellipse(
                                 this.sprite.x + leftOffset.x,
                                 this.sprite.y + leftOffset.y,
-                                2, 0x444444, 0.3
-                            ).setDepth(1);
-
-                            // Add right wheel track
-                            const rightOffset = new Phaser.Math.Vector2(12, 0).rotate(this.sprite.rotation);
-                            const rightTrack = this.scene.add.circle(
+                                3, 8, 0x222222, 0.8
+                            ).setDepth(2).setRotation(this.sprite.rotation);
+            
+                            // Add right wheel track (darker and more visible)
+                            const rightOffset = new Phaser.Math.Vector2(15, 0).rotate(this.sprite.rotation);
+                            const rightTrack = this.scene.add.ellipse(
                                 this.sprite.x + rightOffset.x,
                                 this.sprite.y + rightOffset.y,
-                                2, 0x444444, 0.3
-                            ).setDepth(1);
-
+                                3, 8, 0x222222, 0.8
+                            ).setDepth(2).setRotation(this.sprite.rotation);
+            
                             this.tyreTracks.push(leftTrack, rightTrack);
                             this.lastTrackPosition = { x: this.sprite.x, y: this.sprite.y };
-
+            
                             // Limit number of tracks (performance)
                             if (this.tyreTracks.length > 200) {
                                 const oldTrack = this.tyreTracks.shift();
