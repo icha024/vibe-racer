@@ -274,20 +274,25 @@
                         );
         
                         if (distance > 12) {
-                            // Add left wheel track (darker and more visible)
-                            const leftOffset = new Phaser.Math.Vector2(-15, 0).rotate(this.sprite.rotation);
+                            // Calculate wheel positions relative to car's rear axle
+                            const rearAxleOffset = new Phaser.Math.Vector2(-20, 0).rotate(this.sprite.rotation);
+                            const rearAxleX = this.sprite.x + rearAxleOffset.x;
+                            const rearAxleY = this.sprite.y + rearAxleOffset.y;
+            
+                            // Add left wheel track (from rear axle)
+                            const leftOffset = new Phaser.Math.Vector2(0, -15).rotate(this.sprite.rotation);
                             const leftTrack = this.scene.add.ellipse(
-                                this.sprite.x + leftOffset.x,
-                                this.sprite.y + leftOffset.y,
-                                3, 8, 0x222222, 0.8
+                                rearAxleX + leftOffset.x,
+                                rearAxleY + leftOffset.y,
+                                8, 3, 0x222222, 0.8
                             ).setDepth(2).setRotation(this.sprite.rotation);
             
-                            // Add right wheel track (darker and more visible)
-                            const rightOffset = new Phaser.Math.Vector2(15, 0).rotate(this.sprite.rotation);
+                            // Add right wheel track (from rear axle)
+                            const rightOffset = new Phaser.Math.Vector2(0, 15).rotate(this.sprite.rotation);
                             const rightTrack = this.scene.add.ellipse(
-                                this.sprite.x + rightOffset.x,
-                                this.sprite.y + rightOffset.y,
-                                3, 8, 0x222222, 0.8
+                                rearAxleX + rightOffset.x,
+                                rearAxleY + rightOffset.y,
+                                8, 3, 0x222222, 0.8
                             ).setDepth(2).setRotation(this.sprite.rotation);
             
                             this.tyreTracks.push(leftTrack, rightTrack);
