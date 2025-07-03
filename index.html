@@ -2,29 +2,28 @@
 <html>
 <head>
     <title>Phaser Racer Pro - Refactored</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-        body { 
-            margin: 0; 
+        html, body {
+            margin: 0;
             padding: 0;
-            overflow: hidden; 
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             background-color: #000;
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
         }
-        
+        #game-container {
+            width: 100%;
+            height: 100%;
+        }
         canvas {
             display: block;
-            width: 100vw !important;
-            height: 100vh !important;
-            object-fit: contain;
         }
     </style>
 </head>
 <body>
+    <div id="game-container"></div>
     <script>
         window.onload = function() {
 
@@ -56,11 +55,17 @@
 
                     // Calculate radiusX here for start position
                     const radiusX = OUTER_WIDTH * 0.4;
-                    const radiusY = OUTER_HEIGHT * 0.35;
 
+                    // Define a fixed position for the finish line
+                    this.finishLinePosition = {
+                        x: centerX + (radiusX * 0.8) + (1200 / 3) - 50,
+                        y: centerY
+                    };
+
+                    // Start the car behind the finish line
                     this.startPosition = {
-                        x: centerX + (radiusX * 0.8) + (1200 / 3) - 50, // Move slightly left to center on track
-                        y: centerY,
+                        x: this.finishLinePosition.x,
+                        y: this.finishLinePosition.y + 45, // Start ~half a car length behind the line
                         angle: -Math.PI / 2 // Face upwards (90 degrees anti-clockwise from right)
                     };
                 }
@@ -127,10 +132,10 @@
                     // Add checkered finish line across the track
                     const finishLineAngle = Math.PI / 2; // Vertical line across track
                     const finishLineLength = TRACK_WIDTH * 0.8;
-                    const finishX1 = this.startPosition.x - Math.sin(finishLineAngle) * finishLineLength / 2;
-                    const finishY1 = this.startPosition.y - Math.cos(finishLineAngle) * finishLineLength / 2;
-                    const finishX2 = this.startPosition.x + Math.sin(finishLineAngle) * finishLineLength / 2;
-                    const finishY2 = this.startPosition.y + Math.cos(finishLineAngle) * finishLineLength / 2;
+                    const finishX1 = this.finishLinePosition.x - Math.sin(finishLineAngle) * finishLineLength / 2;
+                    const finishY1 = this.finishLinePosition.y - Math.cos(finishLineAngle) * finishLineLength / 2;
+                    const finishX2 = this.finishLinePosition.x + Math.sin(finishLineAngle) * finishLineLength / 2;
+                    const finishY2 = this.finishLinePosition.y + Math.cos(finishLineAngle) * finishLineLength / 2;
 
                     // Create checkered pattern across the track
                     const numSquares = 16;
@@ -395,16 +400,16 @@
                     this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                                     (window.innerWidth <= 768 && 'ontouchstart' in window);
                     console.log('Mobile detected:', this.isMobile, 'Viewport:', window.innerWidth, 'x', window.innerHeight);
-                    this.isMobile = true; // Force mobile controls for testing
                     console.log('Camera dimensions:', this.cameras.main.width, 'x', this.cameras.main.height);
 
                     if (this.isMobile) {
                         this.createMobileControls();
+                        this.scale.on('resize', this.resize, this);
                     }
 
                     this.cameras.main.startFollow(this.car.sprite, true, 0.1, 0.1); // Adjusted lerping for smoother follow
                     this.cameras.main.setBounds(0, 0, OUTER_WIDTH * 2, OUTER_HEIGHT * 2);
-                    this.cameras.main.setZoom(1.2); // Reverted to original as requested
+                    this.cameras.main.setZoom(1);
                     console.log('Camera scroll:', this.cameras.main.scrollX, this.cameras.main.scrollY);
 
                     this.debugText = this.add.text(10, 10, '', { font: '16px Arial', fill: '#fff' }).setDepth(1);
@@ -479,11 +484,6 @@
                     const touchControls = this.isMobile ? this.touchControls : null;
                     this.car.update(this.cursors, touchControls);
         
-                    // Position mobile controls relative to camera
-                    if (this.isMobile) {
-                        this.positionMobileControls();
-                    }
-
                     // Rest of existing update code remains the same...
                     const onTrack = this.track.isOnTrack(this.car.sprite);
                     this.car.setOffTrack(!onTrack);
@@ -515,30 +515,52 @@
 
                 positionMobileControls() {
                     const buttonSize = 80;
-                    const margin = 30;
-    
-                    // Get the camera's viewport dimensions
-                    const camera = this.cameras.main;
-                    const viewportWidth = camera.width;
-                    const viewportHeight = camera.height;
+                    const padding = 30;
 
-                    // Position buttons relative to camera view (fixed to screen)
-                    this.leftButton.setPosition(
-                        margin + buttonSize/2,
-                        viewportHeight - margin - buttonSize/2
-                    );
+                    const w = this.sys.game.renderer.width;
+                    const h = this.sys.game.renderer.height;
 
-                    this.rightButton.setPosition(
-                        margin + buttonSize + 30 + buttonSize/2,
-                        viewportHeight - margin - buttonSize/2
-                    );
+                    const isPortrait = h > w;
 
-                    this.accelerateButton.setPosition(
-                        viewportWidth - margin - buttonSize/2,
-                        viewportHeight - margin - buttonSize/2
-                    );
+                    let leftBtnPos, rightBtnPos, accelBtnPos;
 
-                    // Update text positions to match buttons
+                    // Move controls up by 2 button lengths
+                    const verticalOffset = 0.1 * buttonSize;
+
+                    if (isPortrait) {
+                        // Portrait layout
+                        accelBtnPos = {
+                            x: w - padding - (buttonSize / 2),
+                            y: h - padding - (buttonSize / 2) - verticalOffset
+                        };
+                        rightBtnPos = {
+                            x: padding + (buttonSize / 2),
+                            y: h - padding - (buttonSize / 2) - verticalOffset
+                        };
+                        leftBtnPos = {
+                            x: padding + (buttonSize / 2),
+                            y: h - padding - buttonSize - padding - (buttonSize / 2) - verticalOffset
+                        };
+                    } else {
+                        // Landscape layout
+                        accelBtnPos = {
+                            x: w - padding - (buttonSize / 2),
+                            y: h - padding - (buttonSize / 2)
+                        };
+                        leftBtnPos = {
+                            x: padding + (buttonSize / 2),
+                            y: h - padding - (buttonSize / 2)
+                        };
+                        rightBtnPos = {
+                            x: padding + buttonSize + padding + (buttonSize / 2),
+                            y: h - padding - (buttonSize / 2)
+                        };
+                    }
+
+                    this.leftButton.setPosition(leftBtnPos.x, leftBtnPos.y);
+                    this.rightButton.setPosition(rightBtnPos.x, rightBtnPos.y);
+                    this.accelerateButton.setPosition(accelBtnPos.x, accelBtnPos.y);
+
                     this.leftButtonText.setPosition(this.leftButton.x, this.leftButton.y);
                     this.rightButtonText.setPosition(this.rightButton.x, this.rightButton.y);
                     this.accelerateButtonText.setPosition(this.accelerateButton.x, this.accelerateButton.y);
@@ -554,11 +576,12 @@
             // --- GAME CONFIGURATION ---
             const config = {
                 type: Phaser.AUTO,
-                width: window.innerWidth,
-                height: window.innerHeight,
                 scale: {
-                    mode: Phaser.Scale.RESIZE,
-                    autoCenter: Phaser.Scale.CENTER_BOTH
+                    mode: Phaser.Scale.FIT,
+                    autoCenter: Phaser.Scale.CENTER_BOTH,
+                    parent: 'game-container',
+                    width: 1080,
+                    height: 1920
                 },
                 physics: {
                     default: 'matter',
@@ -572,11 +595,6 @@
 
             // --- START GAME ---
             const game = new Phaser.Game(config);
-
-            // Add after: const game = new Phaser.Game(config);
-            window.addEventListener('resize', () => {
-                game.scale.resize(window.innerWidth, window.innerHeight);
-            });
         };
     </script>
 </body>
