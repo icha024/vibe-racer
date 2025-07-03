@@ -1,249 +1,582 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Phaser Racer Pro</title>
+    <title>Phaser Racer Pro - Refactored</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+        #game-container {
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            display: block;
+        }
     </style>
 </head>
 <body>
+    <div id="game-container"></div>
     <script>
         window.onload = function() {
+
+            // --- CONSTANTS ---
+            const TRACK_WIDTH = 240; // Double the original width
+            const OUTER_WIDTH = 5600; // Changed from 2800 to 5600
+            const OUTER_HEIGHT = 3200; // Changed from 1600 to 3200
+            const CAR_FRICTION = {
+                NORMAL: 0.05,
+                GRASS: 0.085
+            };
+            const CAR_CONTROLS = {
+                ACCELERATION: 0.0075, // Half the original speed
+                STEERING: 0.015 // Half the original steering
+            };
+
+            // --- TRACK CLASS ---
+            class Track {
+                constructor(scene) {
+                    this.scene = scene;
+                    this.graphics = this.scene.add.graphics();
+                    
+                    const centerX = OUTER_WIDTH;
+                    const centerY = OUTER_HEIGHT;
+
+                    // Create geometry
+                    this.outerPolygon = this.createTrackPolygon(centerX, centerY, OUTER_WIDTH, OUTER_HEIGHT);
+                    this.innerPolygon = this.createTrackPolygon(centerX, centerY, OUTER_WIDTH - (TRACK_WIDTH * 2), OUTER_HEIGHT - (TRACK_WIDTH * 2));
+
+                    // Calculate radiusX here for start position
+                    const radiusX = OUTER_WIDTH * 0.4;
+
+                    // Define a fixed position for the finish line
+                    this.finishLinePosition = {
+                        x: centerX + (radiusX * 0.8) + (1200 / 3) - 50,
+                        y: centerY
+                    };
+
+                    // Start the car behind the finish line
+                    this.startPosition = {
+                        x: this.finishLinePosition.x,
+                        y: this.finishLinePosition.y + 45, // Start ~half a car length behind the line
+                        angle: -Math.PI / 2 // Face upwards (90 degrees anti-clockwise from right)
+                    };
+                }
+
+                createTrackPolygon(centerX, centerY, width, height) {
+                    const points = [];
+                    const radiusX = width * 0.4;
+                    const radiusY = height * 0.35;
+                    const segments = 32; // Number of segments for smooth curves
+
+                    // Create an oval with some interesting variations
+                    for (let i = 0; i < segments; i++) {
+                        const angle = (i / segments) * Math.PI * 2;
+
+                        // Add some variation to make it more interesting
+                        let x, y;
+
+                        if (i < segments * 0.25 || i > segments * 0.75) {
+                            // Straights on left and right - make them slightly longer
+                            const t = (i < segments * 0.25) ? i / (segments * 0.25) : (i - segments * 0.75) / (segments * 0.25);
+                            x = centerX + Math.cos(angle) * radiusX * (1 + 0.2 * Math.sin(t * Math.PI));
+                            y = centerY + Math.sin(angle) * radiusY;
+                        } else {
+                            // Curves - add some banking effect
+                            x = centerX + Math.cos(angle) * radiusX;
+                            y = centerY + Math.sin(angle) * radiusY * (1 + 0.1 * Math.sin(angle * 2));
+                        }
+
+                        points.push(new Phaser.Math.Vector2(x, y));
+                    }
+
+                    return new Phaser.Geom.Polygon(points);
+                }
+
+                draw() {
+                    // Grass background (already drawn in scene)
+
+                    // Outer track boundary (darker for contrast)
+                    this.graphics.fillStyle(0x333333);
+                    this.graphics.fillPoints(this.outerPolygon.points, true);
+
+                    // Main track surface
+                    this.graphics.fillStyle(0x555555);
+                    this.graphics.fillPoints(this.innerPolygon.points, true);
+
+                    // Add racing line (optimal path)
+                    this.graphics.lineStyle(3, 0x888888, 0.6);
+                    const racingLinePoints = [];
+                    const segments = 32;
+                    const centerX = OUTER_WIDTH;
+                    const centerY = OUTER_HEIGHT;
+                    const lineRadiusX = (OUTER_WIDTH - TRACK_WIDTH) * 0.35;
+                    const lineRadiusY = (OUTER_HEIGHT - TRACK_WIDTH) * 0.3;
+
+                    for (let i = 0; i <= segments; i++) {
+                        const angle = (i / segments) * Math.PI * 2;
+                        const x = centerX + Math.cos(angle) * lineRadiusX;
+                        const y = centerY + Math.sin(angle) * lineRadiusY;
+                        racingLinePoints.push(new Phaser.Math.Vector2(x, y));
+                    }
+
+                    this.graphics.strokePoints(racingLinePoints, false, true);
+
+                    // Add checkered finish line across the track
+                    const finishLineAngle = Math.PI / 2; // Vertical line across track
+                    const finishLineLength = TRACK_WIDTH * 0.8;
+                    const finishX1 = this.finishLinePosition.x - Math.sin(finishLineAngle) * finishLineLength / 2;
+                    const finishY1 = this.finishLinePosition.y - Math.cos(finishLineAngle) * finishLineLength / 2;
+                    const finishX2 = this.finishLinePosition.x + Math.sin(finishLineAngle) * finishLineLength / 2;
+                    const finishY2 = this.finishLinePosition.y + Math.cos(finishLineAngle) * finishLineLength / 2;
+
+                    // Create checkered pattern across the track
+                    const numSquares = 16;
+                    const squareSize = finishLineLength / numSquares;
+
+                    for (let i = 0; i < numSquares; i++) {
+                        const t = i / numSquares;
+                        const x = finishX1 + (finishX2 - finishX1) * t;
+                        const y = finishY1 + (finishY2 - finishY1) * t;
+    
+                        // Alternate black and white squares
+                        const color = (i % 2 === 0) ? 0xFFFFFF : 0x000000;
+                        this.graphics.fillStyle(color);
+    
+                        // Create square perpendicular to the line
+                        this.graphics.fillRect(x - 4, y - squareSize/2, 8, squareSize);
+                    }
+
+                    // Inner grass area
+                    this.graphics.fillStyle(0x228B22);
+                    this.graphics.fillPoints(this.innerPolygon.points, true);
+
+                    // Add track boundary markers (kerbs)
+                    this.graphics.lineStyle(2, 0xFF0000, 0.8);
+                    const kerbSegments = 16;
+                    const kerbRadiusX = OUTER_WIDTH * 0.4;
+                    const kerbRadiusY = OUTER_HEIGHT * 0.35;
+
+                    for (let i = 0; i < kerbSegments; i++) {
+                        const angle = (i / kerbSegments) * Math.PI * 2;
+                        const outerX = centerX + Math.cos(angle) * kerbRadiusX;
+                        const outerY = centerY + Math.sin(angle) * kerbRadiusY;
+                        const innerX = centerX + Math.cos(angle) * (kerbRadiusX - TRACK_WIDTH);
+                        const innerY = centerY + Math.sin(angle) * (kerbRadiusY - TRACK_WIDTH);
+
+                        if (i % 4 === 0) { // Every 4th segment
+                            this.graphics.lineBetween(outerX, outerY, outerX + Math.cos(angle) * 20, outerY + Math.sin(angle) * 20);
+                            this.graphics.lineBetween(innerX, innerY, innerX - Math.cos(angle) * 20, innerY - Math.sin(angle) * 20);
+                        }
+                    }
+                }
+
+                isOnTrack(point) {
+                    return Phaser.Geom.Polygon.ContainsPoint(this.outerPolygon, point) && 
+                           !Phaser.Geom.Polygon.ContainsPoint(this.innerPolygon, point);
+                }
+            }
+
+            // --- CAR CLASS ---
+            class Car {
+                static preload(scene) {
+                    let carGraphics = scene.make.graphics({x: 0, y: 0, add: false});
+                    carGraphics.clear();
+
+                    // Chassis & Nose
+                    carGraphics.fillStyle(0xFF1801);
+                    carGraphics.beginPath();
+                    carGraphics.moveTo(85, 25);
+                    carGraphics.lineTo(70, 15);
+                    carGraphics.lineTo(25, 15);
+                    carGraphics.lineTo(25, 35);
+                    carGraphics.lineTo(70, 35);
+                    carGraphics.closePath();
+                    carGraphics.fillPath();
+
+                    // Sidepods
+                    carGraphics.fillRect(30, 10, 30, 5);
+                    carGraphics.fillRect(30, 35, 30, 5);
+                    // Cockpit
+                    carGraphics.fillStyle(0x222222);
+                    carGraphics.fillRect(50, 20, 15, 10);
+                    // Wings
+                    carGraphics.fillStyle(0x333333);
+                    carGraphics.fillRect(75, 5, 10, 40);
+                    carGraphics.fillRect(5, 5, 10, 40);
+                    carGraphics.fillRect(5, 15, 30, 5);
+                    carGraphics.fillRect(5, 30, 30, 5);
+                    // Wheels
+                    carGraphics.fillStyle(0x111111);
+                    carGraphics.fillRect(60, 5, 10, 5);
+                    carGraphics.fillRect(60, 40, 10, 5);
+                    carGraphics.fillRect(22.5, 2.5, 15, 5);
+                    carGraphics.fillRect(22.5, 42.5, 15, 5);
+
+                    // Outlines
+                    carGraphics.lineStyle(2, 0x000000);
+                    carGraphics.beginPath();
+                    carGraphics.moveTo(85, 25);
+                    carGraphics.lineTo(70, 15);
+                    carGraphics.lineTo(25, 15);
+                    carGraphics.lineTo(25, 35);
+                    carGraphics.lineTo(70, 35);
+                    carGraphics.closePath();
+                    carGraphics.strokePath();
+                    carGraphics.strokeRect(30, 10, 30, 5);
+                    carGraphics.strokeRect(30, 35, 30, 5);
+                    carGraphics.strokeRect(50, 20, 15, 10);
+                    carGraphics.strokeRect(75, 5, 10, 40);
+                    carGraphics.strokeRect(5, 5, 10, 40);
+                    carGraphics.strokeRect(5, 15, 30, 5);
+                    carGraphics.strokeRect(5, 30, 30, 5);
+                    carGraphics.strokeRect(60, 5, 10, 5);
+                    carGraphics.strokeRect(60, 40, 10, 5);
+                    carGraphics.strokeRect(22.5, 2.5, 15, 5);
+                    carGraphics.strokeRect(22.5, 42.5, 15, 5);
+
+                    carGraphics.generateTexture('car_texture', 90, 50); // Reverted to original size
+                }
+
+                constructor(scene, startPosition) {
+                    console.log('Car constructor called with startPosition:', startPosition);
+                    this.scene = scene;
+                    this.sprite = scene.matter.add.image(startPosition.x, startPosition.y, 'car_texture')
+                        .setRotation(startPosition.angle || 0)
+                        .setFrictionAir(CAR_FRICTION.NORMAL)
+                        .setMass(10)
+                        .setDepth(10); // Set a high depth to ensure it's drawn on top
+                    console.log('Car sprite created at:', this.sprite.x, this.sprite.y);
+                    
+                    this.emitter = scene.add.particles(0, 0, 'white_pixel', {
+                        speed: 10,
+                        scale: { start: 0.5, end: 0 },
+                        blendMode: 'ADD',
+                        lifespan: 400
+                    });
+                    this.emitter.startFollow(this.sprite);
+
+                    this.tyreTracks = [];
+                    this.lastTrackPosition = { x: startPosition.x, y: startPosition.y };
+                    this.trackTimer = 0;
+                }
+
+                update(cursors, touchControls = null) {
+                    const leftPressed = cursors.left.isDown || (touchControls && touchControls.left);
+                    const rightPressed = cursors.right.isDown || (touchControls && touchControls.right);
+                    const upPressed = cursors.up.isDown || (touchControls && touchControls.accelerate);
+        
+                    if (leftPressed) {
+                        this.sprite.setAngularVelocity(-CAR_CONTROLS.STEERING);
+                    } else if (rightPressed) {
+                        this.sprite.setAngularVelocity(CAR_CONTROLS.STEERING);
+                    } else {
+                        this.sprite.setAngularVelocity(0);
+                    }
+
+                    if (upPressed) {
+                        const force = new Phaser.Math.Vector2(Math.cos(this.sprite.rotation), Math.sin(this.sprite.rotation)).scale(CAR_CONTROLS.ACCELERATION);
+                        this.sprite.applyForce(force);
+                    }
+
+                    this.updateTyreTracks();
+                }
+
+                updateTyreTracks() {
+                    this.trackTimer++;
+    
+                    // Only add tracks when moving and on track
+                    if (this.sprite.body.speed > 0.5 && this.trackTimer % 6 === 0) {
+                        const distance = Phaser.Math.Distance.Between(
+                            this.sprite.x, this.sprite.y,
+                            this.lastTrackPosition.x, this.lastTrackPosition.y
+                        );
+        
+                        if (distance > 12) {
+                            // Calculate wheel positions relative to car's rear axle
+                            const rearAxleOffset = new Phaser.Math.Vector2(-20, 0).rotate(this.sprite.rotation);
+                            const rearAxleX = this.sprite.x + rearAxleOffset.x;
+                            const rearAxleY = this.sprite.y + rearAxleOffset.y;
+            
+                            // Add left wheel track (from rear axle)
+                            const leftOffset = new Phaser.Math.Vector2(0, -15).rotate(this.sprite.rotation);
+                            const leftTrack = this.scene.add.ellipse(
+                                rearAxleX + leftOffset.x,
+                                rearAxleY + leftOffset.y,
+                                8, 3, 0x222222, 0.8
+                            ).setDepth(2).setRotation(this.sprite.rotation);
+            
+                            // Add right wheel track (from rear axle)
+                            const rightOffset = new Phaser.Math.Vector2(0, 15).rotate(this.sprite.rotation);
+                            const rightTrack = this.scene.add.ellipse(
+                                rearAxleX + rightOffset.x,
+                                rearAxleY + rightOffset.y,
+                                8, 3, 0x222222, 0.8
+                            ).setDepth(2).setRotation(this.sprite.rotation);
+            
+                            this.tyreTracks.push(leftTrack, rightTrack);
+                            this.lastTrackPosition = { x: this.sprite.x, y: this.sprite.y };
+            
+                            // Limit number of tracks (performance)
+                            if (this.tyreTracks.length > 200) {
+                                const oldTrack = this.tyreTracks.shift();
+                                oldTrack.destroy();
+                                const oldTrack2 = this.tyreTracks.shift();
+                                oldTrack2.destroy();
+                            }
+                        }
+                    }
+                }
+
+                setOffTrack(isOffTrack) {
+                    if (isOffTrack) {
+                        this.sprite.setFrictionAir(CAR_FRICTION.GRASS);
+                        this.emitter.stop();
+                    } else {
+                        this.sprite.setFrictionAir(CAR_FRICTION.NORMAL);
+                        if (this.sprite.body.speed > 0.1) {
+                            this.emitter.start();
+                        } else {
+                            this.emitter.stop();
+                        }
+                    }
+                }
+
+                }
+
+                // --- GAME SCENE ---
+                class GameScene extends Phaser.Scene {
+                constructor() {
+                    super({ key: 'GameScene' });
+                }
+
+                preload() {
+                    Car.preload(this);
+                    this.textures.generate('white_pixel', { data: ['#'], pixelWidth: 2, pixelHeight: 2 });
+                }
+
+                create() {
+                    // Grass background
+                    this.add.rectangle(
+                        OUTER_WIDTH, 
+                        OUTER_HEIGHT, 
+                        OUTER_WIDTH * 2, 
+                        OUTER_HEIGHT * 2, 
+                        0x228B22
+                    );
+
+                    this.track = new Track(this);
+                    this.track.draw();
+
+                    this.car = new Car(this, this.track.startPosition);
+                    console.log('Car start position:', this.track.startPosition);
+                    console.log('Car sprite final position:', this.car.sprite.x, this.car.sprite.y);
+                    console.log('Track outer polygon points:', this.track.outerPolygon.points);
+                    console.log('Game config width:', this.game.config.width, 'height:', this.game.config.height);
+
+                    this.lapCount = -2;
+                    this.hasPassedFinish = false;
+                    this.lapText = this.add.text(10, 50, 'Lap: 1', {
+                        font: '20px Arial',
+                        fill: '#fff',
+                        stroke: '#000',
+                        strokeThickness: 2
+                    }).setDepth(1);
+                    
+                    // Set the camera's position to the car's initial position
+                    this.cameras.main.setScroll(this.car.sprite.x - this.game.config.width / 2, this.car.sprite.y - this.game.config.height / 2);
+
+                    this.cursors = this.input.keyboard.createCursorKeys();
+        
+                    // Mobile detection and touch controls
+                    // Enhanced mobile detection including Chrome DevTools simulation
+                    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                                    (window.innerWidth <= 768 && 'ontouchstart' in window);
+                    console.log('Mobile detected:', this.isMobile, 'Viewport:', window.innerWidth, 'x', window.innerHeight);
+                    console.log('Camera dimensions:', this.cameras.main.width, 'x', this.cameras.main.height);
+
+                    if (this.isMobile) {
+                        this.createMobileControls();
+                        this.scale.on('resize', this.resize, this);
+                    }
+
+                    this.cameras.main.startFollow(this.car.sprite, true, 0.1, 0.1); // Adjusted lerping for smoother follow
+                    this.cameras.main.setBounds(0, 0, OUTER_WIDTH * 2, OUTER_HEIGHT * 2);
+                    this.cameras.main.setZoom(1);
+                    console.log('Camera scroll:', this.cameras.main.scrollX, this.cameras.main.scrollY);
+
+                    this.debugText = this.add.text(10, 10, '', { font: '16px Arial', fill: '#fff' }).setDepth(1);
+                }
+
+                createMobileControls() {
+                    // Create control buttons that follow the camera
+                    const buttonSize = 80;
+
+                    // Left button
+                    this.leftButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
+                        .setStrokeStyle(3, 0xffffff)
+                        .setInteractive()
+                        .setDepth(100)
+                        .setScrollFactor(0);
+
+                    this.leftButtonText = this.add.text(0, 0, '←', {
+                        font: '40px Arial',
+                        fill: '#fff'
+                    }).setOrigin(0.5).setDepth(101).setScrollFactor(0);
+
+                    // Right button
+                    this.rightButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
+                        .setStrokeStyle(3, 0xffffff)
+                        .setInteractive()
+                        .setDepth(100)
+                        .setScrollFactor(0);
+
+                    this.rightButtonText = this.add.text(0, 0, '→', {
+                        font: '40px Arial',
+                        fill: '#fff'
+                    }).setOrigin(0.5).setDepth(101).setScrollFactor(0);
+
+                    // Accelerate button
+                    this.accelerateButton = this.add.circle(0, 0, buttonSize/2, 0x00aa00, 0.7)
+                        .setStrokeStyle(3, 0xffffff)
+                        .setInteractive()
+                        .setDepth(100)
+                        .setScrollFactor(0);
+
+                    this.accelerateButtonText = this.add.text(0, 0, '↑', {
+                        font: '40px Arial',
+                        fill: '#fff'
+                    }).setOrigin(0.5).setDepth(101).setScrollFactor(0);
+
+                    // Touch states
+                    this.touchControls = {
+                        left: false,
+                        right: false,
+                        accelerate: false
+                    };
+
+                    // Button event handlers
+                    this.leftButton.on('pointerdown', () => this.touchControls.left = true);
+                    this.leftButton.on('pointerup', () => this.touchControls.left = false);
+                    this.leftButton.on('pointerout', () => this.touchControls.left = false);
+
+                    this.rightButton.on('pointerdown', () => this.touchControls.right = true);
+                    this.rightButton.on('pointerup', () => this.touchControls.right = false);
+                    this.rightButton.on('pointerout', () => this.touchControls.right = false);
+
+                    this.accelerateButton.on('pointerdown', () => this.touchControls.accelerate = true);
+                    this.accelerateButton.on('pointerup', () => this.touchControls.accelerate = false);
+                    this.accelerateButton.on('pointerout', () => this.touchControls.accelerate = false);
+
+                    // Position buttons initially
+                    this.positionMobileControls();
+                }
+
+                update() {
+                    // Pass touch controls to car if mobile
+                    const touchControls = this.isMobile ? this.touchControls : null;
+                    this.car.update(this.cursors, touchControls);
+        
+                    // Rest of existing update code remains the same...
+                    const onTrack = this.track.isOnTrack(this.car.sprite);
+                    this.car.setOffTrack(!onTrack);
+
+                    // Update UI
+                    this.debugText.setPosition(this.cameras.main.scrollX + 10, this.cameras.main.scrollY + 10);
+                    this.debugText.setText([
+                        `Speed: ${this.car.sprite.body.speed.toFixed(2)}`,
+                        onTrack ? 'On Track' : 'Off Track!'
+                    ]);
+
+                    // Lap detection
+                    const distanceToFinish = Phaser.Math.Distance.Between(
+                        this.car.sprite.x, this.car.sprite.y,
+                        this.track.startPosition.x, this.track.startPosition.y
+                    );
+
+                    if (distanceToFinish < 50 && !this.hasPassedFinish) {
+                        this.lapCount++;
+                        this.hasPassedFinish = true;
+                        this.cameras.main.flash(200, 255, 255, 255);
+                    } else if (distanceToFinish > 100) {
+                        this.hasPassedFinish = false;
+                    }
+
+                    this.lapText.setPosition(this.cameras.main.scrollX + 10, this.cameras.main.scrollY + 50);
+                    this.lapText.setText(`Lap: ${this.lapCount + 1}`);
+                }
+
+                positionMobileControls() {
+                    const buttonSize = 80;
+                    const padding = 30;
+
+                    const w = this.sys.game.config.width;
+                    const h = this.sys.game.config.height;
+
+                    const isPortrait = h > w;
+
+                    let leftBtnPos, rightBtnPos, accelBtnPos;
+
+                    if (isPortrait) {
+                        // Portrait layout - controls at bottom
+                        const bottomY = h - padding - (buttonSize / 2);
+                        accelBtnPos = { x: w - padding - (buttonSize / 2), y: bottomY };
+                        leftBtnPos = { x: padding + (buttonSize / 2), y: bottomY };
+                        rightBtnPos = { x: leftBtnPos.x + buttonSize + padding, y: bottomY };
+
+                    } else {
+                        // Landscape layout - controls at bottom right and left
+                        const bottomY = h - padding - (buttonSize / 2);
+                        accelBtnPos = { x: w - padding - (buttonSize / 2), y: bottomY };
+                        leftBtnPos = { x: padding + (buttonSize / 2), y: bottomY };
+                        rightBtnPos = { x: leftBtnPos.x + buttonSize + padding, y: bottomY };
+                    }
+
+                    this.leftButton.setPosition(leftBtnPos.x, leftBtnPos.y);
+                    this.rightButton.setPosition(rightBtnPos.x, rightBtnPos.y);
+                    this.accelerateButton.setPosition(accelBtnPos.x, accelBtnPos.y);
+
+                    this.leftButtonText.setPosition(this.leftButton.x, this.leftButton.y);
+                    this.rightButtonText.setPosition(this.rightButton.x, this.rightButton.y);
+                    this.accelerateButtonText.setPosition(this.accelerateButton.x, this.accelerateButton.y);
+                }
+
+                resize(gameSize) {
+                    if (this.isMobile) {
+                        this.positionMobileControls();
+                    }
+                }
+            }
+
             // --- GAME CONFIGURATION ---
             const config = {
                 type: Phaser.AUTO,
-                width: 900,
-                height: 700,
+                scale: {
+                    mode: Phaser.Scale.FIT,
+                    autoCenter: Phaser.Scale.CENTER_BOTH,
+                    parent: 'game-container',
+                    width: 540,  // Half of the original resolution
+                    height: 960, // Half of the original resolution
+                },
                 physics: {
                     default: 'matter',
                     matter: {
                         gravity: { y: 0 },
-                        debug: true
+                        debug: false
                     }
                 },
-                scene: {
-                    preload: preload,
-                    create: create,
-                    update: update
-                }
+                scene: [GameScene]
             };
 
-            // --- GLOBAL VARIABLES ---
+            // --- START GAME ---
             const game = new Phaser.Game(config);
-            let car, cursors, outerTrackBody, innerTrackBody, outerTrackPolygon, innerTrackPolygon;
-            const normalFriction = 0.05;
-            const grassFriction = 0.3;
-
-            // --- SCENE FUNCTIONS ---
-            function preload() {
-                let carGraphics = this.make.graphics({x: 0, y: 0, add: false});
-                carGraphics.clear();
-
-                // Chassis & Nose - Combined for a sleek arrow shape
-                carGraphics.fillStyle(0xFF1801); // Main body color (e.g., Ferrari red)
-                carGraphics.beginPath();
-                carGraphics.moveTo(85, 25);  // Nose tip (longer)
-                carGraphics.lineTo(70, 15);  // Front left point (sharper nose angle)
-                carGraphics.lineTo(25, 15);  // Rear left chassis (shorter body)
-                carGraphics.lineTo(25, 35);  // Rear right chassis (shorter body)
-                carGraphics.lineTo(70, 35);  // Front right point (sharper nose angle)
-                carGraphics.closePath();
-                carGraphics.fillPath();
-
-                // Sidepods (subtly wider sections)
-                carGraphics.fillRect(30, 10, 30, 5); // Left sidepod
-                carGraphics.fillRect(30, 35, 30, 5); // Right sidepod
-
-                // Cockpit / Airbox
-                carGraphics.fillStyle(0x222222); // Darker for cockpit
-                carGraphics.fillRect(50, 20, 15, 10); // Central cockpit area
-
-                // Front Wing (wide and thin)
-                carGraphics.fillStyle(0x333333); // Dark grey for carbon fibre
-                carGraphics.fillRect(75, 5, 10, 40); // Main plane (simulated with a rectangle)
-
-                // Rear Wing (T-shape with endplates, distinct from body)
-                carGraphics.fillRect(5, 5, 10, 40); // Vertical endplates
-                carGraphics.fillRect(5, 15, 30, 5); // Upper horizontal element
-                carGraphics.fillRect(5, 30, 30, 5); // Lower horizontal element
-
-                // Wheels (Rectangular/squared off for top-down view)
-                carGraphics.fillStyle(0x111111); // Black for tires
-                // Front Wheels (narrower)
-                carGraphics.fillRect(60, 5, 10, 5); // Front-left wheel
-                carGraphics.fillRect(60, 40, 10, 5); // Front-right wheel
-                // Rear Wheels (wider)
-                carGraphics.fillRect(22.5, 2.5, 15, 5); // Rear-left wheel
-                carGraphics.fillRect(22.5, 42.5, 15, 5); // Rear-right wheel
-
-                // Add outline for better definition - draw after fill to ensure visibility
-                carGraphics.lineStyle(2, 0x000000); // Black outline for clarity
-                
-                // Outline for Chassis & Nose
-                carGraphics.beginPath();
-                carGraphics.moveTo(85, 25);
-                carGraphics.lineTo(70, 15);
-                carGraphics.lineTo(25, 15);
-                carGraphics.lineTo(25, 35);
-                carGraphics.lineTo(70, 35);
-                carGraphics.closePath();
-                carGraphics.strokePath();
-
-                // Outline for Sidepods
-                carGraphics.strokeRect(30, 10, 30, 5);
-                carGraphics.strokeRect(30, 35, 30, 5);
-                
-                // Outline for Cockpit
-                carGraphics.strokeRect(50, 20, 15, 10);
-
-                // Outline for Front Wing
-                carGraphics.strokeRect(75, 5, 10, 40);
-
-                // Outline for Rear Wing
-                carGraphics.strokeRect(5, 5, 10, 40);
-                carGraphics.strokeRect(5, 15, 30, 5);
-                carGraphics.strokeRect(5, 30, 30, 5);
-
-                // Outline for Wheels
-                carGraphics.strokeRect(60, 5, 10, 5);
-                carGraphics.strokeRect(60, 40, 10, 5);
-                carGraphics.strokeRect(22.5, 2.5, 15, 5);
-                carGraphics.strokeRect(22.5, 42.5, 15, 5);
-
-                // Generate texture. Adjust dimensions to encompass all parts
-                carGraphics.generateTexture('car_texture', 90, 50);
-                this.textures.generate('white_pixel', { data: ['#'], pixelWidth: 2, pixelHeight: 2 });
-            }
-
-            function create() {
-                this.debugText = this.add.text(10, 10, '', { font: '16px Arial', fill: '#fff' }).setDepth(1);
-                
-                createTrack.call(this);
-                
-                // Start car inside the track, rotated to face up
-                car = this.matter.add.image(450, 575, 'car_texture')
-                    .setAngle(-90) // Rotate the right-pointing graphic to face up
-                    .setFrictionAir(normalFriction)
-                    .setMass(10);
-
-                cursors = this.input.keyboard.createCursorKeys();
-                
-                this.cameras.main.startFollow(car, true, 0.08, 0.08);
-                this.cameras.main.setZoom(1.5);
-                
-                this.emitter = this.add.particles(0, 0, 'white_pixel', {
-                    speed: 10,
-                    scale: { start: 0.5, end: 0 },
-                    blendMode: 'ADD',
-                    lifespan: 400
-                });
-                this.emitter.startFollow(car);
-                this.emitter.stop();
-            }
-
-            function createTrack() {
-                // Define the vertices for the outer and inner track polygons.
-                // These points define a more challenging, winding track with approximated curves.
-                const outerVertices = [
-                    { x: 200, y: 100 }, { x: 700, y: 100 }, // Top straight
-                    { x: 800, y: 150 }, { x: 850, y: 250 }, // Top-right curve points
-                    { x: 850, y: 450 }, { x: 800, y: 550 }, // Right straight + curve points
-                    { x: 700, y: 600 }, { x: 200, y: 600 }, // Bottom straight
-                    { x: 100, y: 550 }, { x: 50, y: 450 },  // Bottom-left curve points
-                    { x: 50, y: 250 }, { x: 100, y: 150 }   // Left straight + curve points
-                ];
-
-                const innerVertices = [
-                    { x: 250, y: 200 }, { x: 650, y: 200 }, // Top straight (inner) - moved down by 50px from previous inner
-                    { x: 700, y: 240 }, { x: 750, y: 300 }, // Top-right curve points (inner) - adjusted for wider turn
-                    { x: 750, y: 400 }, { x: 700, y: 460 }, // Right straight + curve points (inner) - adjusted for wider turn
-                    { x: 650, y: 500 }, { x: 250, y: 500 }, // Bottom straight (inner) - moved up by 50px from previous inner
-                    { x: 200, y: 460 }, { x: 150, y: 400 }, // Bottom-left curve points (inner) - adjusted for wider turn
-                    { x: 150, y: 300 }, { x: 200, y: 240 }  // Left straight + curve points (inner) - adjusted for wider turn
-                ];
-
-                // Draw the grass background for the entire scene
-                this.add.rectangle(450, 350, 900, 700, 0x228B22); // Grass
-
-                // Create graphics object for drawing the track road
-                const trackGraphics = this.add.graphics();
-
-                // Draw the outer track fill (road colour)
-                trackGraphics.fillStyle(0x444444); // Road colour
-                trackGraphics.beginPath();
-                trackGraphics.moveTo(outerVertices[0].x, outerVertices[0].y);
-                for (let i = 1; i < outerVertices.length; i++) {
-                    trackGraphics.lineTo(outerVertices[i].x, outerVertices[i].y);
-                }
-                trackGraphics.closePath();
-                trackGraphics.fillPath();
-
-                // Draw the inner "grass" fill to create the road shape by covering the inner part
-                trackGraphics.fillStyle(0x228B22); // Grass colour
-                trackGraphics.beginPath();
-                trackGraphics.moveTo(innerVertices[0].x, innerVertices[0].y);
-                for (let i = 1; i < innerVertices.length; i++) {
-                    trackGraphics.lineTo(innerVertices[i].x, innerVertices[i].y);
-                }
-                trackGraphics.closePath();
-                trackGraphics.fillPath();
-
-                // Create Matter.js static bodies for the physical track boundaries (walls).
-                // `fromVertices(null, null, ...)` tells Matter.js to place the body at the centroid of the given vertices.
-                // The `true` parameter `flagInternal` is crucial for concave shapes to ensure correct collisions.
-                outerTrackBody = this.matter.add.fromVertices(null, null, outerVertices, {
-                    isStatic: true,      // Makes the body unmovable
-                    label: 'outerWall',  // Label for debugging/identification
-                    friction: 0.1,       // Friction when car hits the wall
-                    restitution: 0.9     // Bounciness when car hits the wall
-                }, true); // `true` for flagInternal (important for concave decomposition)
-
-                innerTrackBody = this.matter.add.fromVertices(null, null, innerVertices, {
-                    isStatic: true,
-                    label: 'innerWall',
-                    friction: 0.1,
-                    restitution: 0.9
-                }, true); // `true` for flagInternal
-
-                // Create Phaser.Geom.Polygon objects for the 'onTrack' check based on position.
-                // These are used for the `contains` method in the update loop.
-                outerTrackPolygon = new Phaser.Geom.Polygon(outerVertices);
-                innerTrackPolygon = new Phaser.Geom.Polygon(innerVertices);
-            }
-
-            function update() {
-                this.debugText.setPosition(this.cameras.main.scrollX + 10, this.cameras.main.scrollY + 10);
-                
-                const carPoint = new Phaser.Geom.Point(car.x, car.y);
-                const onTrack = outerTrackPolygon.contains(carPoint.x, carPoint.y) && !innerTrackPolygon.contains(carPoint.x, carPoint.y);
-                
-                if (onTrack) {
-                    car.setFrictionAir(normalFriction);
-                    this.debugText.setText([`Speed: ${car.body.speed.toFixed(2)}`, 'On Track']);
-                } else {
-                    car.setFrictionAir(grassFriction);
-                    this.debugText.setText([`Speed: ${car.body.speed.toFixed(2)}`, 'Off Track!']);
-                }
-
-                const acceleration = 0.005;
-                const steering = 0.03;
-
-                if (cursors.left.isDown) car.setAngularVelocity(-steering);
-                else if (cursors.right.isDown) car.setAngularVelocity(steering);
-                else car.setAngularVelocity(0);
-
-                if (cursors.up.isDown) {
-                    const force = new Phaser.Math.Vector2(Math.cos(car.rotation), Math.sin(car.rotation)).scale(acceleration);
-                    car.applyForce(force);
-                }
-
-                if (car.body.speed > 0.1 && onTrack) {
-                    this.emitter.start();
-                } else {
-                    this.emitter.stop();
-                }
-            }
         };
     </script>
 </body>
