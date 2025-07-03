@@ -246,16 +246,20 @@
                     this.trackTimer = 0;
                 }
 
-                update(cursors) {
-                    if (cursors.left.isDown) {
+                update(cursors, touchControls = null) {
+                    const leftPressed = cursors.left.isDown || (touchControls && touchControls.left);
+                    const rightPressed = cursors.right.isDown || (touchControls && touchControls.right);
+                    const upPressed = cursors.up.isDown || (touchControls && touchControls.accelerate);
+        
+                    if (leftPressed) {
                         this.sprite.setAngularVelocity(-CAR_CONTROLS.STEERING);
-                    } else if (cursors.right.isDown) {
+                    } else if (rightPressed) {
                         this.sprite.setAngularVelocity(CAR_CONTROLS.STEERING);
                     } else {
                         this.sprite.setAngularVelocity(0);
                     }
 
-                    if (cursors.up.isDown) {
+                    if (upPressed) {
                         const force = new Phaser.Math.Vector2(Math.cos(this.sprite.rotation), Math.sin(this.sprite.rotation)).scale(CAR_CONTROLS.ACCELERATION);
                         this.sprite.applyForce(force);
                     }
@@ -322,10 +326,68 @@
                         }
                     }
                 }
-            }
 
-            // --- GAME SCENE ---
-            class GameScene extends Phaser.Scene {
+                createMobileControls() {
+                    // Create control buttons that follow the camera
+                    const buttonSize = 80;
+                    const margin = 20;
+            
+                    // Left button
+                    this.leftButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
+                        .setStrokeStyle(3, 0xffffff)
+                        .setInteractive()
+                        .setDepth(100);
+            
+                    this.add.text(0, 0, '←', {
+                        font: '40px Arial',
+                        fill: '#fff'
+                    }).setOrigin(0.5).setDepth(101);
+            
+                    // Right button
+                    this.rightButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
+                        .setStrokeStyle(3, 0xffffff)
+                        .setInteractive()
+                        .setDepth(100);
+            
+                    this.add.text(0, 0, '→', {
+                        font: '40px Arial',
+                        fill: '#fff'
+                    }).setOrigin(0.5).setDepth(101);
+            
+                    // Accelerate button
+                    this.accelerateButton = this.add.circle(0, 0, buttonSize/2, 0x00aa00, 0.7)
+                        .setStrokeStyle(3, 0xffffff)
+                        .setInteractive()
+                        .setDepth(100);
+            
+                    this.add.text(0, 0, '↑', {
+                        font: '40px Arial',
+                        fill: '#fff'
+                    }).setOrigin(0.5).setDepth(101);
+            
+                    // Touch states
+                    this.touchControls = {
+                        left: false,
+                        right: false,
+                        accelerate: false
+                    };
+            
+                    // Button event handlers
+                    this.leftButton.on('pointerdown', () => this.touchControls.left = true);
+                    this.leftButton.on('pointerup', () => this.touchControls.left = false);
+                    this.leftButton.on('pointerout', () => this.touchControls.left = false);
+            
+                    this.rightButton.on('pointerdown', () => this.touchControls.right = true);
+                    this.rightButton.on('pointerup', () => this.touchControls.right = false);
+                    this.rightButton.on('pointerout', () => this.touchControls.right = false);
+            
+                    this.accelerateButton.on('pointerdown', () => this.touchControls.accelerate = true);
+                    this.accelerateButton.on('pointerup', () => this.touchControls.accelerate = false);
+                    this.accelerateButton.on('pointerout', () => this.touchControls.accelerate = false);
+                }
+
+                // --- GAME SCENE ---
+                class GameScene extends Phaser.Scene {
                 constructor() {
                     super({ key: 'GameScene' });
                 }
@@ -367,7 +429,14 @@
                     this.cameras.main.setScroll(this.car.sprite.x - this.game.config.width / 2, this.car.sprite.y - this.game.config.height / 2);
 
                     this.cursors = this.input.keyboard.createCursorKeys();
-                    
+        
+                    // Mobile detection and touch controls
+                    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                    if (this.isMobile) {
+                        this.createMobileControls();
+                    }
+
                     this.cameras.main.startFollow(this.car.sprite, true, 0.1, 0.1); // Adjusted lerping for smoother follow
                     this.cameras.main.setBounds(0, 0, OUTER_WIDTH * 2, OUTER_HEIGHT * 2);
                     this.cameras.main.setZoom(1.2); // Reverted to original as requested
@@ -377,8 +446,46 @@
                 }
 
                 update() {
-                    this.car.update(this.cursors);
+                    // Pass touch controls to car if mobile
+                    const touchControls = this.isMobile ? this.touchControls : null;
+                    this.car.update(this.cursors, touchControls);
+        
+                    // Position mobile controls relative to camera
+                    if (this.isMobile) {
+                        const buttonSize = 80;
+                        const margin = 20;
+            
+                        // Position buttons relative to camera viewport
+                        this.leftButton.setPosition(
+                            this.cameras.main.scrollX + margin + buttonSize/2,
+                            this.cameras.main.scrollY + this.game.config.height - margin - buttonSize/2
+                        );
+            
+                        this.rightButton.setPosition(
+                            this.cameras.main.scrollX + margin + buttonSize + 20 + buttonSize/2,
+                            this.cameras.main.scrollY + this.game.config.height - margin - buttonSize/2
+                        );
+            
+                        this.accelerateButton.setPosition(
+                            this.cameras.main.scrollX + this.game.config.width - margin - buttonSize/2,
+                            this.cameras.main.scrollY + this.game.config.height - margin - buttonSize/2
+                        );
+            
+                        // Update text positions to match buttons
+                        this.children.list.forEach(child => {
+                            if (child.type === 'Text' && (child.text === '←' || child.text === '→' || child.text === '↑')) {
+                                if (child.text === '←') {
+                                    child.setPosition(this.leftButton.x, this.leftButton.y);
+                                } else if (child.text === '→') {
+                                    child.setPosition(this.rightButton.x, this.rightButton.y);
+                                } else if (child.text === '↑') {
+                                    child.setPosition(this.accelerateButton.x, this.accelerateButton.y);
+                                }
+                            }
+                        });
+                    }
 
+                    // Rest of existing update code remains the same...
                     const onTrack = this.track.isOnTrack(this.car.sprite);
                     this.car.setOffTrack(!onTrack);
 
@@ -398,14 +505,11 @@
                     if (distanceToFinish < 50 && !this.hasPassedFinish) {
                         this.lapCount++;
                         this.hasPassedFinish = true;
-
-                        // Flash effect for lap completion
                         this.cameras.main.flash(200, 255, 255, 255);
                     } else if (distanceToFinish > 100) {
                         this.hasPassedFinish = false;
                     }
 
-                    // Update lap display
                     this.lapText.setPosition(this.cameras.main.scrollX + 10, this.cameras.main.scrollY + 50);
                     this.lapText.setText(`Lap: ${this.lapCount + 1}`);
                 }
