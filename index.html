@@ -401,60 +401,65 @@
                 createMobileControls() {
                     // Create control buttons that follow the camera
                     const buttonSize = 80;
-                    const margin = 20;
-            
+
                     // Left button
                     this.leftButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
                         .setStrokeStyle(3, 0xffffff)
                         .setInteractive()
-                        .setDepth(100);
-            
-                    this.add.text(0, 0, '←', {
+                        .setDepth(100)
+                        .setScrollFactor(0);
+
+                    this.leftButtonText = this.add.text(0, 0, '←', {
                         font: '40px Arial',
                         fill: '#fff'
-                    }).setOrigin(0.5).setDepth(101);
-            
+                    }).setOrigin(0.5).setDepth(101).setScrollFactor(0);
+
                     // Right button
                     this.rightButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
                         .setStrokeStyle(3, 0xffffff)
                         .setInteractive()
-                        .setDepth(100);
-            
-                    this.add.text(0, 0, '→', {
+                        .setDepth(100)
+                        .setScrollFactor(0);
+
+                    this.rightButtonText = this.add.text(0, 0, '→', {
                         font: '40px Arial',
                         fill: '#fff'
-                    }).setOrigin(0.5).setDepth(101);
-            
+                    }).setOrigin(0.5).setDepth(101).setScrollFactor(0);
+
                     // Accelerate button
                     this.accelerateButton = this.add.circle(0, 0, buttonSize/2, 0x00aa00, 0.7)
                         .setStrokeStyle(3, 0xffffff)
                         .setInteractive()
-                        .setDepth(100);
-            
-                    this.add.text(0, 0, '↑', {
+                        .setDepth(100)
+                        .setScrollFactor(0);
+
+                    this.accelerateButtonText = this.add.text(0, 0, '↑', {
                         font: '40px Arial',
                         fill: '#fff'
-                    }).setOrigin(0.5).setDepth(101);
-            
+                    }).setOrigin(0.5).setDepth(101).setScrollFactor(0);
+
                     // Touch states
                     this.touchControls = {
                         left: false,
                         right: false,
                         accelerate: false
                     };
-            
+
                     // Button event handlers
                     this.leftButton.on('pointerdown', () => this.touchControls.left = true);
                     this.leftButton.on('pointerup', () => this.touchControls.left = false);
                     this.leftButton.on('pointerout', () => this.touchControls.left = false);
-            
+
                     this.rightButton.on('pointerdown', () => this.touchControls.right = true);
                     this.rightButton.on('pointerup', () => this.touchControls.right = false);
                     this.rightButton.on('pointerout', () => this.touchControls.right = false);
-            
+
                     this.accelerateButton.on('pointerdown', () => this.touchControls.accelerate = true);
                     this.accelerateButton.on('pointerup', () => this.touchControls.accelerate = false);
                     this.accelerateButton.on('pointerout', () => this.touchControls.accelerate = false);
+
+                    // Position buttons initially
+                    this.positionMobileControls();
                 }
 
                 update() {
@@ -523,11 +528,40 @@
                 this.leftButtonText.setPosition(this.leftButton.x, this.leftButton.y);
                 this.rightButtonText.setPosition(this.rightButton.x, this.rightButton.y);
                 this.accelerateButtonText.setPosition(this.accelerateButton.x, this.accelerateButton.y);
-            }
+                }
 
-            resize(gameSize) {
-                if (this.isMobile) {
-                    this.positionMobileControls();
+                positionMobileControls() {
+                    const buttonSize = 80;
+                    const margin = 30;
+                    const gameWidth = this.cameras.main.width;
+                    const gameHeight = this.cameras.main.height;
+
+                    // Position buttons relative to camera viewport (fixed to screen)
+                    this.leftButton.setPosition(
+                        margin + buttonSize/2,
+                        gameHeight - margin - buttonSize/2
+                    );
+
+                    this.rightButton.setPosition(
+                        margin + buttonSize + 30 + buttonSize/2,
+                        gameHeight - margin - buttonSize/2
+                    );
+
+                    this.accelerateButton.setPosition(
+                        gameWidth - margin - buttonSize/2,
+                        gameHeight - margin - buttonSize/2
+                    );
+
+                    // Update text positions to match buttons
+                    this.leftButtonText.setPosition(this.leftButton.x, this.leftButton.y);
+                    this.rightButtonText.setPosition(this.rightButton.x, this.rightButton.y);
+                    this.accelerateButtonText.setPosition(this.accelerateButton.x, this.accelerateButton.y);
+                }
+
+                resize(gameSize) {
+                    if (this.isMobile) {
+                        this.positionMobileControls();
+                    }
                 }
             }
 
@@ -561,9 +595,3 @@
     </script>
 </body>
 </html>
-canvas {
-    display: block;
-    width: 100vw !important;
-    height: 100vh !important;
-    object-fit: contain;
-}
