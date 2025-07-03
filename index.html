@@ -227,7 +227,7 @@
                     console.log('Car constructor called with startPosition:', startPosition);
                     this.scene = scene;
                     this.sprite = scene.matter.add.image(startPosition.x, startPosition.y, 'car_texture')
-                        .setAngle(startPosition.angle || 0)
+                        .setRotation(startPosition.angle || 0)
                         .setFrictionAir(CAR_FRICTION.NORMAL)
                         .setMass(10)
                         .setDepth(10); // Set a high depth to ensure it's drawn on top
