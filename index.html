@@ -391,7 +391,11 @@
                     this.cursors = this.input.keyboard.createCursorKeys();
         
                     // Mobile detection and touch controls
-                    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    // Enhanced mobile detection including Chrome DevTools simulation
+                    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                                    (window.innerWidth <= 768 && 'ontouchstart' in window);
+                    console.log('Mobile detected:', this.isMobile, 'Viewport:', window.innerWidth, 'x', window.innerHeight);
+                    this.isMobile = true; // Force mobile controls for testing
 
                     if (this.isMobile) {
                         this.createMobileControls();
@@ -511,23 +515,25 @@
                 positionMobileControls() {
                     const buttonSize = 80;
                     const margin = 30;
-                    const gameWidth = this.cameras.main.width;
-                    const gameHeight = this.cameras.main.height;
+                    
+                    // Use actual viewport dimensions instead of camera dimensions
+                    const viewportWidth = this.sys.game.canvas.width;
+                    const viewportHeight = this.sys.game.canvas.height;
 
-                    // Position buttons relative to camera viewport (fixed to screen)
+                    // Position buttons relative to viewport (fixed to screen)
                     this.leftButton.setPosition(
                         margin + buttonSize/2,
-                        gameHeight - margin - buttonSize/2
+                        viewportHeight - margin - buttonSize/2
                     );
 
                     this.rightButton.setPosition(
                         margin + buttonSize + 30 + buttonSize/2,
-                        gameHeight - margin - buttonSize/2
+                        viewportHeight - margin - buttonSize/2
                     );
 
                     this.accelerateButton.setPosition(
-                        gameWidth - margin - buttonSize/2,
-                        gameHeight - margin - buttonSize/2
+                        viewportWidth - margin - buttonSize/2,
+                        viewportHeight - margin - buttonSize/2
                     );
 
                     // Update text positions to match buttons
