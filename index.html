@@ -12,16 +12,16 @@
         window.onload = function() {
 
             // --- CONSTANTS ---
-            const TRACK_WIDTH = 120;
-            const OUTER_WIDTH = 1400;
-            const OUTER_HEIGHT = 800;
+            const TRACK_WIDTH = 120; // Reverted to original size
+            const OUTER_WIDTH = 2800; // Scaled by 2x for circuit length
+            const OUTER_HEIGHT = 1600; // Scaled by 2x for circuit length
             const CAR_FRICTION = {
                 NORMAL: 0.05,
                 GRASS: 0.3
             };
             const CAR_CONTROLS = {
-                ACCELERATION: 0.015,
-                STEERING: 0.03
+                ACCELERATION: 0.015, // Reverted to original
+                STEERING: 0.03 // Reverted to original
             };
 
             // --- TRACK CLASS ---
@@ -58,10 +58,6 @@
                 }
 
                 draw() {
-                    // Grass background
-                    this.graphics.fillStyle(0x228B22);
-                    this.graphics.fillRect(0, 0, this.scene.game.config.width, this.scene.game.config.height);
-
                     // Tarmac
                     this.graphics.fillStyle(0x444444);
                     this.graphics.fillPoints(this.outerPolygon.points, true);
@@ -84,34 +80,69 @@
                     carGraphics.clear();
 
                     // Chassis & Nose
-                    carGraphics.fillStyle(0xFF1801).beginPath().moveTo(85, 25).lineTo(70, 15).lineTo(25, 15).lineTo(25, 35).lineTo(70, 35).closePath().fillPath();
+                    carGraphics.fillStyle(0xFF1801);
+                    carGraphics.beginPath();
+                    carGraphics.moveTo(85, 25);
+                    carGraphics.lineTo(70, 15);
+                    carGraphics.lineTo(25, 15);
+                    carGraphics.lineTo(25, 35);
+                    carGraphics.lineTo(70, 35);
+                    carGraphics.closePath();
+                    carGraphics.fillPath();
+
                     // Sidepods
-                    carGraphics.fillRect(30, 10, 30, 5).fillRect(30, 35, 30, 5);
+                    carGraphics.fillRect(30, 10, 30, 5);
+                    carGraphics.fillRect(30, 35, 30, 5);
                     // Cockpit
-                    carGraphics.fillStyle(0x222222).fillRect(50, 20, 15, 10);
+                    carGraphics.fillStyle(0x222222);
+                    carGraphics.fillRect(50, 20, 15, 10);
                     // Wings
-                    carGraphics.fillStyle(0x333333).fillRect(75, 5, 10, 40).fillRect(5, 5, 10, 40).fillRect(5, 15, 30, 5).fillRect(5, 30, 30, 5);
+                    carGraphics.fillStyle(0x333333);
+                    carGraphics.fillRect(75, 5, 10, 40);
+                    carGraphics.fillRect(5, 5, 10, 40);
+                    carGraphics.fillRect(5, 15, 30, 5);
+                    carGraphics.fillRect(5, 30, 30, 5);
                     // Wheels
-                    carGraphics.fillStyle(0x111111).fillRect(60, 5, 10, 5).fillRect(60, 40, 10, 5).fillRect(22.5, 2.5, 15, 5).fillRect(22.5, 42.5, 15, 5);
+                    carGraphics.fillStyle(0x111111);
+                    carGraphics.fillRect(60, 5, 10, 5);
+                    carGraphics.fillRect(60, 40, 10, 5);
+                    carGraphics.fillRect(22.5, 2.5, 15, 5);
+                    carGraphics.fillRect(22.5, 42.5, 15, 5);
 
                     // Outlines
                     carGraphics.lineStyle(2, 0x000000);
-                    carGraphics.beginPath().moveTo(85, 25).lineTo(70, 15).lineTo(25, 15).lineTo(25, 35).lineTo(70, 35).closePath().strokePath();
-                    carGraphics.strokeRect(30, 10, 30, 5).strokeRect(30, 35, 30, 5);
+                    carGraphics.beginPath();
+                    carGraphics.moveTo(85, 25);
+                    carGraphics.lineTo(70, 15);
+                    carGraphics.lineTo(25, 15);
+                    carGraphics.lineTo(25, 35);
+                    carGraphics.lineTo(70, 35);
+                    carGraphics.closePath();
+                    carGraphics.strokePath();
+                    carGraphics.strokeRect(30, 10, 30, 5);
+                    carGraphics.strokeRect(30, 35, 30, 5);
                     carGraphics.strokeRect(50, 20, 15, 10);
                     carGraphics.strokeRect(75, 5, 10, 40);
-                    carGraphics.strokeRect(5, 5, 10, 40).strokeRect(5, 15, 30, 5).strokeRect(5, 30, 30, 5);
-                    carGraphics.strokeRect(60, 5, 10, 5).strokeRect(60, 40, 10, 5).strokeRect(22.5, 2.5, 15, 5).strokeRect(22.5, 42.5, 15, 5);
+                    carGraphics.strokeRect(5, 5, 10, 40);
+                    carGraphics.strokeRect(5, 15, 30, 5);
+                    carGraphics.strokeRect(5, 30, 30, 5);
+                    carGraphics.strokeRect(60, 5, 10, 5);
+                    carGraphics.strokeRect(60, 40, 10, 5);
+                    carGraphics.strokeRect(22.5, 2.5, 15, 5);
+                    carGraphics.strokeRect(22.5, 42.5, 15, 5);
 
-                    carGraphics.generateTexture('car_texture', 90, 50);
+                    carGraphics.generateTexture('car_texture', 90, 50); // Reverted to original size
                 }
 
                 constructor(scene, startPosition) {
+                    console.log('Car constructor called with startPosition:', startPosition);
                     this.scene = scene;
                     this.sprite = scene.matter.add.image(startPosition.x, startPosition.y, 'car_texture')
                         .setAngle(0)
                         .setFrictionAir(CAR_FRICTION.NORMAL)
-                        .setMass(10);
+                        .setMass(10)
+                        .setDepth(10); // Set a high depth to ensure it's drawn on top
+                    console.log('Car sprite created at:', this.sprite.x, this.sprite.y);
                     
                     this.emitter = scene.add.particles(0, 0, 'white_pixel', {
                         speed: 10,
@@ -120,7 +151,6 @@
                         lifespan: 400
                     });
                     this.emitter.startFollow(this.sprite);
-                    this.emitter.stop();
                 }
 
                 update(cursors) {
@@ -165,15 +195,29 @@
                 }
 
                 create() {
+                    // Grass background
+                    this.add.rectangle(
+                        this.game.config.width / 2, 
+                        this.game.config.height / 2, 
+                        this.game.config.width, 
+                        this.game.config.height, 
+                        0x228B22
+                    );
+
                     this.track = new Track(this);
                     this.track.draw();
 
                     this.car = new Car(this, this.track.startPosition);
+                    console.log('Car start position:', this.track.startPosition);
+                    console.log('Car sprite final position:', this.car.sprite.x, this.car.sprite.y);
+                    console.log('Track outer polygon points:', this.track.outerPolygon.points);
+                    console.log('Game config width:', this.game.config.width, 'height:', this.game.config.height);
                     
                     this.cursors = this.input.keyboard.createCursorKeys();
                     
                     this.cameras.main.startFollow(this.car.sprite, true, 0.08, 0.08);
-                    this.cameras.main.setZoom(1.2);
+                    this.cameras.main.setZoom(1.2); // Reverted to original as requested
+                    console.log('Camera scroll:', this.cameras.main.scrollX, this.cameras.main.scrollY);
 
                     this.debugText = this.add.text(10, 10, '', { font: '16px Arial', fill: '#fff' }).setDepth(1);
                 }
@@ -196,13 +240,13 @@
             // --- GAME CONFIGURATION ---
             const config = {
                 type: Phaser.AUTO,
-                width: 1600,
-                height: 1000,
+                width: 3200, // Scaled by 2x
+                height: 2000, // Scaled by 2x
                 physics: {
                     default: 'matter',
                     matter: {
                         gravity: { y: 0 },
-                        debug: false
+                        debug: false // Re-enabled for debugging
                     }
                 },
                 scene: [GameScene]
