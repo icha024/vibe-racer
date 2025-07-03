@@ -463,31 +463,20 @@
                     };
 
                     // Button event handlers
+                    // Left button handlers
                     this.leftButton.on('pointerdown', () => this.touchControls.left = true);
                     this.leftButton.on('pointerup', () => this.touchControls.left = false);
-                    this.leftButton.on('pointerout', () => this.touchControls.left = false); // Also clear if pointer moves off button
+                    this.leftButton.on('pointerout', () => this.touchControls.left = false);
 
+                    // Right button handlers  
                     this.rightButton.on('pointerdown', () => this.touchControls.right = true);
                     this.rightButton.on('pointerup', () => this.touchControls.right = false);
-                    this.rightButton.on('pointerout', () => this.touchControls.right = false); // Also clear if pointer moves off button
+                    this.rightButton.on('pointerout', () => this.touchControls.right = false);
 
+                    // Accelerate button handlers
                     this.accelerateButton.on('pointerdown', () => this.touchControls.accelerate = true);
                     this.accelerateButton.on('pointerup', () => this.touchControls.accelerate = false);
-                    this.accelerateButton.on('pointerout', () => this.touchControls.accelerate = false); // Also clear if pointer moves off button
-
-                    // Handle multi-touch: check if any pointer is over the buttons
-                    this.input.on('pointermove', (pointer) => {
-                        this.touchControls.left = this.leftButton.input.hitArea.contains(pointer.x - this.leftButton.x, pointer.y - this.leftButton.y) && pointer.isDown;
-                        this.touchControls.right = this.rightButton.input.hitArea.contains(pointer.x - this.rightButton.x, pointer.y - this.rightButton.y) && pointer.isDown;
-                        this.touchControls.accelerate = this.accelerateButton.input.hitArea.contains(pointer.x - this.accelerateButton.x, pointer.y - this.accelerateButton.y) && pointer.isDown;
-                    });
-
-                    this.input.on('pointerup', (pointer) => {
-                        // Clear all controls when any pointer is released
-                        this.touchControls.left = false;
-                        this.touchControls.right = false;
-                        this.touchControls.accelerate = false;
-                    });
+                    this.accelerateButton.on('pointerout', () => this.touchControls.accelerate = false);
 
                     // Position buttons initially
                     this.positionMobileControls();
