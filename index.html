@@ -327,63 +327,6 @@
                     }
                 }
 
-                createMobileControls() {
-                    // Create control buttons that follow the camera
-                    const buttonSize = 80;
-                    const margin = 20;
-            
-                    // Left button
-                    this.leftButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
-                        .setStrokeStyle(3, 0xffffff)
-                        .setInteractive()
-                        .setDepth(100);
-            
-                    this.add.text(0, 0, '←', {
-                        font: '40px Arial',
-                        fill: '#fff'
-                    }).setOrigin(0.5).setDepth(101);
-            
-                    // Right button
-                    this.rightButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
-                        .setStrokeStyle(3, 0xffffff)
-                        .setInteractive()
-                        .setDepth(100);
-            
-                    this.add.text(0, 0, '→', {
-                        font: '40px Arial',
-                        fill: '#fff'
-                    }).setOrigin(0.5).setDepth(101);
-            
-                    // Accelerate button
-                    this.accelerateButton = this.add.circle(0, 0, buttonSize/2, 0x00aa00, 0.7)
-                        .setStrokeStyle(3, 0xffffff)
-                        .setInteractive()
-                        .setDepth(100);
-            
-                    this.add.text(0, 0, '↑', {
-                        font: '40px Arial',
-                        fill: '#fff'
-                    }).setOrigin(0.5).setDepth(101);
-            
-                    // Touch states
-                    this.touchControls = {
-                        left: false,
-                        right: false,
-                        accelerate: false
-                    };
-            
-                    // Button event handlers
-                    this.leftButton.on('pointerdown', () => this.touchControls.left = true);
-                    this.leftButton.on('pointerup', () => this.touchControls.left = false);
-                    this.leftButton.on('pointerout', () => this.touchControls.left = false);
-            
-                    this.rightButton.on('pointerdown', () => this.touchControls.right = true);
-                    this.rightButton.on('pointerup', () => this.touchControls.right = false);
-                    this.rightButton.on('pointerout', () => this.touchControls.right = false);
-            
-                    this.accelerateButton.on('pointerdown', () => this.touchControls.accelerate = true);
-                    this.accelerateButton.on('pointerup', () => this.touchControls.accelerate = false);
-                    this.accelerateButton.on('pointerout', () => this.touchControls.accelerate = false);
                 }
 
                 // --- GAME SCENE ---
@@ -443,6 +386,65 @@
                     console.log('Camera scroll:', this.cameras.main.scrollX, this.cameras.main.scrollY);
 
                     this.debugText = this.add.text(10, 10, '', { font: '16px Arial', fill: '#fff' }).setDepth(1);
+                }
+
+                createMobileControls() {
+                    // Create control buttons that follow the camera
+                    const buttonSize = 80;
+                    const margin = 20;
+            
+                    // Left button
+                    this.leftButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
+                        .setStrokeStyle(3, 0xffffff)
+                        .setInteractive()
+                        .setDepth(100);
+            
+                    this.add.text(0, 0, '←', {
+                        font: '40px Arial',
+                        fill: '#fff'
+                    }).setOrigin(0.5).setDepth(101);
+            
+                    // Right button
+                    this.rightButton = this.add.circle(0, 0, buttonSize/2, 0x333333, 0.7)
+                        .setStrokeStyle(3, 0xffffff)
+                        .setInteractive()
+                        .setDepth(100);
+            
+                    this.add.text(0, 0, '→', {
+                        font: '40px Arial',
+                        fill: '#fff'
+                    }).setOrigin(0.5).setDepth(101);
+            
+                    // Accelerate button
+                    this.accelerateButton = this.add.circle(0, 0, buttonSize/2, 0x00aa00, 0.7)
+                        .setStrokeStyle(3, 0xffffff)
+                        .setInteractive()
+                        .setDepth(100);
+            
+                    this.add.text(0, 0, '↑', {
+                        font: '40px Arial',
+                        fill: '#fff'
+                    }).setOrigin(0.5).setDepth(101);
+            
+                    // Touch states
+                    this.touchControls = {
+                        left: false,
+                        right: false,
+                        accelerate: false
+                    };
+            
+                    // Button event handlers
+                    this.leftButton.on('pointerdown', () => this.touchControls.left = true);
+                    this.leftButton.on('pointerup', () => this.touchControls.left = false);
+                    this.leftButton.on('pointerout', () => this.touchControls.left = false);
+            
+                    this.rightButton.on('pointerdown', () => this.touchControls.right = true);
+                    this.rightButton.on('pointerup', () => this.touchControls.right = false);
+                    this.rightButton.on('pointerout', () => this.touchControls.right = false);
+            
+                    this.accelerateButton.on('pointerdown', () => this.touchControls.accelerate = true);
+                    this.accelerateButton.on('pointerup', () => this.touchControls.accelerate = false);
+                    this.accelerateButton.on('pointerout', () => this.touchControls.accelerate = false);
                 }
 
                 update() {
