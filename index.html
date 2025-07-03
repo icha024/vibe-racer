@@ -464,39 +464,7 @@
         
                     // Position mobile controls relative to camera
                     if (this.isMobile) {
-                        const buttonSize = 80;
-                        const margin = 30;
-                        const gameWidth = this.sys.game.config.width;
-                        const gameHeight = this.sys.game.config.height;
-
-                        // Position buttons relative to camera viewport
-                        this.leftButton.setPosition(
-                            this.cameras.main.scrollX + margin + buttonSize/2,
-                            this.cameras.main.scrollY + gameHeight - margin - buttonSize/2
-                        );
-
-                        this.rightButton.setPosition(
-                            this.cameras.main.scrollX + margin + buttonSize + 30 + buttonSize/2,
-                            this.cameras.main.scrollY + gameHeight - margin - buttonSize/2
-                        );
-
-                        this.accelerateButton.setPosition(
-                            this.cameras.main.scrollX + gameWidth - margin - buttonSize/2,
-                            this.cameras.main.scrollY + gameHeight - margin - buttonSize/2
-                        );
-
-                        // Update text positions to match buttons
-                        this.children.list.forEach(child => {
-                            if (child.type === 'Text' && (child.text === '←' || child.text === '→' || child.text === '↑')) {
-                                if (child.text === '←') {
-                                    child.setPosition(this.leftButton.x, this.leftButton.y);
-                                } else if (child.text === '→') {
-                                    child.setPosition(this.rightButton.x, this.rightButton.y);
-                                } else if (child.text === '↑') {
-                                    child.setPosition(this.accelerateButton.x, this.accelerateButton.y);
-                                }
-                            }
-                        });
+                        this.positionMobileControls();
                     }
 
                     // Rest of existing update code remains the same...
