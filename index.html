@@ -30,8 +30,8 @@
                     this.scene = scene;
                     this.graphics = this.scene.add.graphics();
                     
-                    const centerX = this.scene.game.config.width / 2;
-                    const centerY = this.scene.game.config.height / 2;
+                    const centerX = OUTER_WIDTH;
+                    const centerY = OUTER_HEIGHT;
 
                     // Create geometry
                     this.outerPolygon = this.createTrackPolygon(centerX, centerY, OUTER_WIDTH, OUTER_HEIGHT);
@@ -197,10 +197,10 @@
                 create() {
                     // Grass background
                     this.add.rectangle(
-                        this.game.config.width / 2, 
-                        this.game.config.height / 2, 
-                        this.game.config.width, 
-                        this.game.config.height, 
+                        OUTER_WIDTH, 
+                        OUTER_HEIGHT, 
+                        OUTER_WIDTH * 2, 
+                        OUTER_HEIGHT * 2, 
                         0x228B22
                     );
 
@@ -244,8 +244,8 @@
             // --- GAME CONFIGURATION ---
             const config = {
                 type: Phaser.AUTO,
-                width: 6400, // Changed from 3200 to 6400
-                height: 4000, // Changed from 2000 to 4000
+                width: 1200, // Viewport width
+                height: 800,  // Viewport height
                 physics: {
                     default: 'matter',
                     matter: {
