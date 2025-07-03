@@ -37,6 +37,10 @@
                     this.outerPolygon = this.createTrackPolygon(centerX, centerY, OUTER_WIDTH, OUTER_HEIGHT);
                     this.innerPolygon = this.createTrackPolygon(centerX, centerY, OUTER_WIDTH - (TRACK_WIDTH * 2), OUTER_HEIGHT - (TRACK_WIDTH * 2));
 
+                    // Calculate radiusX here for start position
+                    const radiusX = OUTER_WIDTH * 0.4;
+                    const radiusY = OUTER_HEIGHT * 0.35;
+
                     this.startPosition = {
                         x: centerX + (radiusX * 0.8), // Position on the right side of the track
                         y: centerY,
@@ -154,12 +158,15 @@
                     // Add track boundary markers (kerbs)
                     this.graphics.lineStyle(2, 0xFF0000, 0.8);
                     const kerbSegments = 16;
+                    const kerbRadiusX = OUTER_WIDTH * 0.4;
+                    const kerbRadiusY = OUTER_HEIGHT * 0.35;
+
                     for (let i = 0; i < kerbSegments; i++) {
                         const angle = (i / kerbSegments) * Math.PI * 2;
-                        const outerX = centerX + Math.cos(angle) * radiusX;
-                        const outerY = centerY + Math.sin(angle) * radiusY;
-                        const innerX = centerX + Math.cos(angle) * (radiusX - TRACK_WIDTH);
-                        const innerY = centerY + Math.sin(angle) * (radiusY - TRACK_WIDTH);
+                        const outerX = centerX + Math.cos(angle) * kerbRadiusX;
+                        const outerY = centerY + Math.sin(angle) * kerbRadiusY;
+                        const innerX = centerX + Math.cos(angle) * (kerbRadiusX - TRACK_WIDTH);
+                        const innerY = centerY + Math.sin(angle) * (kerbRadiusY - TRACK_WIDTH);
 
                         if (i % 4 === 0) { // Every 4th segment
                             this.graphics.lineBetween(outerX, outerY, outerX + Math.cos(angle) * 20, outerY + Math.sin(angle) * 20);
