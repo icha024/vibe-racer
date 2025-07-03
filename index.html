@@ -396,6 +396,7 @@
                                     (window.innerWidth <= 768 && 'ontouchstart' in window);
                     console.log('Mobile detected:', this.isMobile, 'Viewport:', window.innerWidth, 'x', window.innerHeight);
                     this.isMobile = true; // Force mobile controls for testing
+                    console.log('Camera dimensions:', this.cameras.main.width, 'x', this.cameras.main.height);
 
                     if (this.isMobile) {
                         this.createMobileControls();
@@ -515,12 +516,13 @@
                 positionMobileControls() {
                     const buttonSize = 80;
                     const margin = 30;
-                    
-                    // Use actual viewport dimensions instead of camera dimensions
-                    const viewportWidth = this.sys.game.canvas.width;
-                    const viewportHeight = this.sys.game.canvas.height;
+    
+                    // Get the camera's viewport dimensions
+                    const camera = this.cameras.main;
+                    const viewportWidth = camera.width;
+                    const viewportHeight = camera.height;
 
-                    // Position buttons relative to viewport (fixed to screen)
+                    // Position buttons relative to camera view (fixed to screen)
                     this.leftButton.setPosition(
                         margin + buttonSize/2,
                         viewportHeight - margin - buttonSize/2
