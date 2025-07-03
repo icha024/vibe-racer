@@ -12,7 +12,7 @@
         window.onload = function() {
 
             // --- CONSTANTS ---
-            const TRACK_WIDTH = 120; // Reverted to original size
+            const TRACK_WIDTH = 240; // Double the original width
             const OUTER_WIDTH = 5600; // Changed from 2800 to 5600
             const OUTER_HEIGHT = 3200; // Changed from 1600 to 3200
             const CAR_FRICTION = {
@@ -20,8 +20,8 @@
                 GRASS: 0.3
             };
             const CAR_CONTROLS = {
-                ACCELERATION: 0.015, // Reverted to original
-                STEERING: 0.03 // Reverted to original
+                ACCELERATION: 0.0075, // Half the original speed
+                STEERING: 0.015 // Half the original steering
             };
 
             // --- TRACK CLASS ---
@@ -38,22 +38,57 @@
                     this.innerPolygon = this.createTrackPolygon(centerX, centerY, OUTER_WIDTH - (TRACK_WIDTH * 2), OUTER_HEIGHT - (TRACK_WIDTH * 2));
 
                     this.startPosition = {
-                        x: centerX,
-                        y: centerY + (OUTER_HEIGHT / 2) - (TRACK_WIDTH / 2)
+                        x: centerX - (OUTER_WIDTH * 0.3),
+                        y: centerY + (OUTER_HEIGHT * 0.3)
                     };
                 }
 
                 createTrackPolygon(centerX, centerY, width, height) {
-                    const radius = height / 2;
-                    const straight = width - height;
-
-                    const path = new Phaser.Curves.Path(centerX - straight / 2, centerY - radius);
-                    path.lineTo(centerX + straight / 2, centerY - radius);
-                    path.add(new Phaser.Curves.Ellipse(centerX + straight / 2, centerY, radius, radius, -90, 90, false));
-                    path.lineTo(centerX - straight / 2, centerY + radius);
-                    path.add(new Phaser.Curves.Ellipse(centerX - straight / 2, centerY, radius, radius, 90, 270, false));
+                    // Create a 'P' shape rotated 90 degrees clockwise
+                    // The 'P' will be oriented horizontally with the opening facing down
+    
+                    const path = new Phaser.Curves.Path();
+    
+                    // Scale factors for the P shape
+                    const w = width * 0.8;
+                    const h = height * 0.8;
+                    const stemWidth = w * 0.2;
+                    const topHeight = h * 0.4;
+                    const midHeight = h * 0.2;
+    
+                    // Starting point (bottom left of the stem)
+                    const startX = centerX - w/2;
+                    const startY = centerY + h/2;
+    
+                    path.moveTo(startX, startY);
+    
+                    // Bottom of stem to top of stem
+                    path.lineTo(startX, centerY - h/2);
+    
+                    // Top horizontal line
+                    path.lineTo(startX + w - stemWidth, centerY - h/2);
+    
+                    // Top right curve
+                    path.add(new Phaser.Curves.Ellipse(
+                        startX + w - stemWidth, 
+                        centerY - h/2 + topHeight/2, 
+                        stemWidth/2, 
+                        topHeight/2, 
+                        270, 90, false
+                    ));
+    
+                    // Right side of top section
+                    path.lineTo(startX + w - stemWidth/2, centerY - h/2 + topHeight);
+    
+                    // Middle horizontal line (going left)
+                    path.lineTo(startX + stemWidth, centerY - h/2 + topHeight);
+    
+                    // Continue stem down
+                    path.lineTo(startX + stemWidth, startY);
+    
+                    // Close the path
                     path.closePath();
-                    
+    
                     return new Phaser.Geom.Polygon(path.getPoints(128));
                 }
 
