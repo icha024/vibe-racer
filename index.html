@@ -38,58 +38,75 @@
                     this.innerPolygon = this.createTrackPolygon(centerX, centerY, OUTER_WIDTH - (TRACK_WIDTH * 2), OUTER_HEIGHT - (TRACK_WIDTH * 2));
 
                     this.startPosition = {
-                        x: centerX - (OUTER_WIDTH * 0.3),
-                        y: centerY + (OUTER_HEIGHT * 0.3)
+                        x: centerX - (OUTER_WIDTH * 0.25),
+                        y: centerY + (OUTER_HEIGHT * 0.25)
                     };
                 }
 
                 createTrackPolygon(centerX, centerY, width, height) {
-                    // Create a 'P' shape rotated 90 degrees clockwise
-                    // The 'P' will be oriented horizontally with the opening facing down
+                    // Create a 'P' shape rotated 90 degrees clockwise as a closed circuit
+                    // The 'P' will be oriented horizontally with rounded corners
     
-                    const path = new Phaser.Curves.Path();
+                    const points = [];
     
                     // Scale factors for the P shape
-                    const w = width * 0.8;
-                    const h = height * 0.8;
-                    const stemWidth = w * 0.2;
-                    const topHeight = h * 0.4;
-                    const midHeight = h * 0.2;
+                    const w = width * 0.7; // Use more of the available width
+                    const h = height * 0.7; // Use more of the available height
+                    const stemWidth = w * 0.25;
+                    const topHeight = h * 0.35;
+                    const cornerRadius = Math.min(stemWidth * 0.3, topHeight * 0.3);
     
                     // Starting point (bottom left of the stem)
                     const startX = centerX - w/2;
                     const startY = centerY + h/2;
     
-                    path.moveTo(startX, startY);
+                    // Bottom left corner (rounded)
+                    this.addRoundedCorner(points, startX + cornerRadius, startY, cornerRadius, 180, 270);
     
-                    // Bottom of stem to top of stem
-                    path.lineTo(startX, centerY - h/2);
+                    // Bottom horizontal line
+                    points.push(new Phaser.Math.Vector2(startX + stemWidth - cornerRadius, startY));
+    
+                    // Bottom right of stem (rounded corner)
+                    this.addRoundedCorner(points, startX + stemWidth - cornerRadius, startY - cornerRadius, cornerRadius, 270, 360);
+    
+                    // Right side of stem going up
+                    points.push(new Phaser.Math.Vector2(startX + stemWidth, centerY - h/2 + topHeight + cornerRadius));
+    
+                    // Corner before middle horizontal
+                    this.addRoundedCorner(points, startX + stemWidth + cornerRadius, centerY - h/2 + topHeight + cornerRadius, cornerRadius, 180, 270);
+    
+                    // Middle horizontal line going right
+                    points.push(new Phaser.Math.Vector2(startX + w - stemWidth - cornerRadius, centerY - h/2 + topHeight));
+    
+                    // Top right corner of middle section
+                    this.addRoundedCorner(points, startX + w - stemWidth - cornerRadius, centerY - h/2 + topHeight - cornerRadius, cornerRadius, 0, 90);
+    
+                    // Right side of top section going up
+                    points.push(new Phaser.Math.Vector2(startX + w - stemWidth, centerY - h/2 + cornerRadius));
+    
+                    // Top right corner
+                    this.addRoundedCorner(points, startX + w - stemWidth - cornerRadius, centerY - h/2 + cornerRadius, cornerRadius, 270, 360);
     
                     // Top horizontal line
-                    path.lineTo(startX + w - stemWidth, centerY - h/2);
+                    points.push(new Phaser.Math.Vector2(startX + cornerRadius, centerY - h/2));
     
-                    // Top right curve
-                    path.add(new Phaser.Curves.Ellipse(
-                        startX + w - stemWidth, 
-                        centerY - h/2 + topHeight/2, 
-                        stemWidth/2, 
-                        topHeight/2, 
-                        270, 90, false
-                    ));
+                    // Top left corner
+                    this.addRoundedCorner(points, startX + cornerRadius, centerY - h/2 + cornerRadius, cornerRadius, 180, 270);
     
-                    // Right side of top section
-                    path.lineTo(startX + w - stemWidth/2, centerY - h/2 + topHeight);
+                    // Left side going down
+                    points.push(new Phaser.Math.Vector2(startX, startY - cornerRadius));
     
-                    // Middle horizontal line (going left)
-                    path.lineTo(startX + stemWidth, centerY - h/2 + topHeight);
-    
-                    // Continue stem down
-                    path.lineTo(startX + stemWidth, startY);
-    
-                    // Close the path
-                    path.closePath();
-    
-                    return new Phaser.Geom.Polygon(path.getPoints(128));
+                    return new Phaser.Geom.Polygon(points);
+                }
+
+                addRoundedCorner(points, centerX, centerY, radius, startAngle, endAngle) {
+                    const steps = 8; // Number of points for the curve
+                    for (let i = 0; i <= steps; i++) {
+                        const angle = Phaser.Math.DegToRad(startAngle + (endAngle - startAngle) * (i / steps));
+                        const x = centerX + Math.cos(angle) * radius;
+                        const y = centerY + Math.sin(angle) * radius;
+                        points.push(new Phaser.Math.Vector2(x, y));
+                    }
                 }
 
                 draw() {
